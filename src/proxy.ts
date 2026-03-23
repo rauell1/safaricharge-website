@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Security Middleware for SafariCharge
- * 
- * This middleware handles:
+ * Security proxy for SafariCharge
+ *
+ * Responsibilities:
  * 1. Security headers for all responses
  * 2. API route protection
  * 3. Request logging for audit
@@ -34,7 +34,7 @@ const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
