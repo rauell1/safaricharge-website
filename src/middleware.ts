@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Security proxy for SafariCharge
+ * Security middleware for SafariCharge
  *
  * Responsibilities:
  * 1. Security headers for all responses
@@ -34,7 +34,7 @@ const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
 };
 
-export function proxy(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
