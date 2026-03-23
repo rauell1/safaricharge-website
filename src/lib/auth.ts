@@ -179,24 +179,3 @@ export function formatUserResponse(user: {
 export function hasPermission(user: { accessPermissions: string }, permission: string): boolean {
   return user.accessPermissions.includes(permission);
 }
-
-/**
- * Check if user can access admin features
- */
-export function isAdmin(user: { role: string }): boolean {
-  return user.role === 'ADMIN';
-}
-
-/**
- * Check if user can access employee features
- */
-export function canAccessEmployeeFeatures(user: { role: string }): boolean {
-  return ['ADMIN', 'EMPLOYEE'].includes(user.role);
-}
-
-/**
- * Check if user can access fleet features
- */
-export function canAccessFleetFeatures(user: { role: string }): boolean {
-  return ['ADMIN', 'EMPLOYEE', 'FLEET_MANAGER'].includes(user.role);
-}

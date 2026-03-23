@@ -4,26 +4,20 @@ import { formatUserResponse } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get email from query params (for demo purposes)
-    // In production, you would use a session token/JWT
-    const email = request.nextUrl.searchParams.get('email');
+    // Require userId only — do not allow email-based lookup to prevent
+    // unauthenticated user enumeration via the /api/auth/me endpoint.
     const userId = request.nextUrl.searchParams.get('userId');
 
-    if (!email && !userId) {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Email or userId is required' },
+        { error: 'userId is required' },
         { status: 400 }
       );
     }
 
-    // Build the where clause properly
-    const whereClause = email 
-      ? { email: email.toLowerCase() }
-      : { id: userId as string };
-
-    // Find user
+    // Find user by ID
     const user = await db.user.findUnique({
-      where: whereClause,
+      where: { id: userId },
     });
 
     if (!user) {

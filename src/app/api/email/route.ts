@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { MAIN_ADMIN_EMAIL } from '@/lib/security';
 
 // Lazy-initialize Resend to avoid build errors when API key is missing
 let resend: Resend | null = null;
@@ -10,9 +11,6 @@ function getResendClient(): Resend | null {
   }
   return resend;
 }
-
-// Main admin email
-const MAIN_ADMIN_EMAIL = 'royokola3@gmail.com';
 
 // Email templates
 function getVerificationEmailHtml(code: string, name: string): string {
@@ -376,5 +374,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Export admin email for use in other API routes
-export { MAIN_ADMIN_EMAIL };

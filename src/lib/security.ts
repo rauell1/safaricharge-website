@@ -3,6 +3,8 @@
  * This file contains security-related constants, types, and utility functions
  */
 
+import { randomBytes } from 'crypto';
+
 // Main admin email - should be moved to environment variable in production
 export const MAIN_ADMIN_EMAIL = process.env.MAIN_ADMIN_EMAIL || 'royokola3@gmail.com';
 
@@ -167,15 +169,14 @@ export function canAccessFleet(userRole: string): boolean {
 }
 
 /**
- * Generate a secure random token
+ * Generate a cryptographically secure random token using Node.js crypto
  */
 export function generateSecureToken(length: number = 32): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  // Each byte yields 2 hex characters; generate exactly enough bytes then trim.
+  // This guarantees `length` hex chars with 4 bits of entropy per character.
+  return randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
 }
 
 /**
