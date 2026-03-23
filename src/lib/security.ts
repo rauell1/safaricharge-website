@@ -5,8 +5,10 @@
 
 import { randomBytes } from 'crypto';
 
-// Main admin email - should be moved to environment variable in production
-export const MAIN_ADMIN_EMAIL = process.env.MAIN_ADMIN_EMAIL || 'royokola3@gmail.com';
+// Main admin email - set via MAIN_ADMIN_EMAIL environment variable.
+// If not configured, no account will receive ADMIN role on registration
+// and admin notification emails will be silently skipped.
+export const MAIN_ADMIN_EMAIL = process.env.MAIN_ADMIN_EMAIL || '';
 
 // Session configuration
 export const SESSION_CONFIG = {

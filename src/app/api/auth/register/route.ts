@@ -17,9 +17,8 @@ type SecurityLevel = 'BASIC' | 'STANDARD' | 'ELEVATED' | 'MANAGER' | 'SUPERVISOR
 // Helper function to send email
 async function sendEmail(type: string, to: string | string[], data: Record<string, unknown>) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
       
     const response = await fetch(`${baseUrl}/api/email`, {
       method: 'POST',

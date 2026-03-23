@@ -160,13 +160,18 @@ bun run start
 
 ### Deploy with Caddy (recommended)
 
-A `Caddyfile.txt` is included. Rename it to `Caddyfile` and run:
+A `Caddyfile.txt` template is included. To use it:
+
+1. Rename it to `Caddyfile`
+2. Replace `your-domain.com` with your actual domain name (e.g. `safaricharge.co.ke`)
+3. Run:
 
 ```bash
 caddy run
 ```
 
-Caddy handles HTTPS automatically via Let's Encrypt.
+Caddy automatically provisions HTTPS via Let's Encrypt when a real domain name is used.  
+For local testing without a domain, set the site address to `:80` instead.
 
 ---
 

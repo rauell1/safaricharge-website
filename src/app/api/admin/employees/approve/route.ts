@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-
-// Main admin email
-const MAIN_ADMIN_EMAIL = 'royokola3@gmail.com';
+import { MAIN_ADMIN_EMAIL } from '@/lib/security';
 
 // Helper function to send email
 async function sendEmail(type: string, to: string | string[], data: Record<string, unknown>) {
