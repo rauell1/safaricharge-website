@@ -1,47 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { roleSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
-// PATCH - Update user role
+function getRoleDefaults(role: 'DRIVER' | 'ADMIN' | 'FLEET_MANAGER' | 'EMPLOYEE') {
+  switch (role) {
+    case 'ADMIN':
+      return {
+        subscriptionPlan: 'ENTERPRISE',
+        hasPaidAccess: true,
+        accessPermissions: 'charging_map,battery_toolkit,analytics,user_management,fleet_management',
+        isApproved: true,
+      };
+    case 'EMPLOYEE':
+      return {
+        hasPaidAccess: true,
+        accessPermissions: 'charging_map,battery_toolkit,analytics,fleet_management',
+      };
+    case 'FLEET_MANAGER':
+      return {
+        subscriptionPlan: 'ENTERPRISE',
+        hasPaidAccess: true,
+        accessPermissions: 'charging_map,fleet_management',
+      };
+    default:
+      return {
+        subscriptionPlan: 'FREE',
+        hasPaidAccess: false,
+        accessPermissions: 'charging_map',
+      };
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const adminSession = await requireAdminUser(request);
     const { id } = await params;
-    const body = await request.json();
-    const { role } = body;
+    const parsedBody = roleSchema.safeParse(await request.json());
 
-    const validRoles = ['DRIVER', 'ADMIN', 'FLEET_MANAGER', 'EMPLOYEE'];
-    if (!role || !validRoles.includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid role payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Check if user exists
-    const user = await db.user.findUnique({
-      where: { id },
-    });
+    if (adminSession.user.id === id && parsedBody.data.role !== 'ADMIN') {
+      return jsonError(request, 'You cannot remove your own admin role.', 400);
+    }
+
+    const user = await db.user.findUnique({ where: { id } });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'User not found.', 404);
     }
 
-    // Update role
     const updatedUser = await db.user.update({
       where: { id },
-      data: { role },
+      data: {
+        role: parsedBody.data.role,
+        ...getRoleDefaults(parsedBody.data.role),
+      },
     });
 
-    console.log(`\n🔄 User role updated: ${user.email} -> ${role}\n`);
+    logger.info('User role updated', {
+      actorUserId: adminSession.user.id,
+      targetUserId: updatedUser.id,
+      newRole: updatedUser.role,
+    });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'Role updated successfully',
+      message: 'Role updated successfully.',
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -50,10 +84,6 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    console.error('Error updating role:', error);
-    return NextResponse.json(
-      { error: 'Failed to update role' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/users/[id]/role' });
   }
 }

@@ -1,85 +1,113 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireRole } from '@/lib/access-control';
+import { stationMutationSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
+import { createPaginationMeta, handleRouteError, jsonError, jsonSuccess, parsePagination } from '@/lib/api';
 
-// GET - Fetch all stations
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const earthRadiusKm = 6371;
+  const deltaLat = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const connectorType = searchParams.get('connectorType');
-    const lat = parseFloat(searchParams.get('lat') || '0');
-    const lng = parseFloat(searchParams.get('lng') || '0');
-    const radius = parseFloat(searchParams.get('radius') || '50'); // km
+    const search = searchParams.get('search')?.trim();
+    const lat = searchParams.get('lat') ? Number(searchParams.get('lat')) : null;
+    const lng = searchParams.get('lng') ? Number(searchParams.get('lng')) : null;
+    const radius = searchParams.get('radius') ? Number(searchParams.get('radius')) : 50;
+    const { page, pageSize } = parsePagination(searchParams);
 
     const stations = await db.chargingStation.findMany({
+      where: {
+        ...(status && status !== 'all' ? { status: status as never } : {}),
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search } },
+                { city: { contains: search } },
+                { address: { contains: search } },
+              ],
+            }
+          : {}),
+        ...(connectorType && connectorType !== 'all'
+          ? {
+              connectors: {
+                some: {
+                  type: connectorType as never,
+                },
+              },
+            }
+          : {}),
+      },
       include: {
         connectors: true,
       },
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     });
 
-    // Filter by status if provided
-    let filteredStations = stations;
-    if (status && status !== 'all') {
-      filteredStations = filteredStations.filter(s => s.status === status);
-    }
+    const withDistance =
+      lat !== null && lng !== null
+        ? stations
+            .map((station) => ({
+              ...station,
+              distance: calculateDistance(lat, lng, station.latitude, station.longitude),
+            }))
+            .filter((station) => station.distance <= radius)
+            .sort((left, right) => left.distance - right.distance)
+        : stations;
 
-    // Filter by connector type if provided
-    if (connectorType && connectorType !== 'all') {
-      filteredStations = filteredStations.filter(s => 
-        s.connectors.some(c => c.type === connectorType)
-      );
-    }
+    const start = (page - 1) * pageSize;
+    const paginatedStations = withDistance.slice(start, start + pageSize);
 
-    // Calculate distance if lat/lng provided
-    if (lat && lng) {
-      filteredStations = filteredStations.map(station => {
-        const distance = calculateDistance(lat, lng, station.latitude, station.longitude);
-        return { ...station, distance };
-      });
-
-      // Filter by radius
-      filteredStations = filteredStations.filter(s => 
-        (s as any).distance <= radius
-      );
-
-      // Sort by distance
-      filteredStations.sort((a, b) => 
-        ((a as any).distance || 0) - ((b as any).distance || 0)
-      );
-    }
-
-    return NextResponse.json(filteredStations);
+    return jsonSuccess(request, {
+      success: true,
+      stations: paginatedStations,
+      pagination: createPaginationMeta(withDistance.length, page, pageSize),
+    });
   } catch (error) {
-    console.error('Error fetching stations:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch stations' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/stations' });
   }
 }
 
-// POST - Create a new station
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, description, address, city, latitude, longitude, connectors, amenities } = body;
+    await requireRole(request, ['ADMIN', 'EMPLOYEE']);
+    const parsedBody = stationMutationSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid station payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
+    }
 
     const station = await db.chargingStation.create({
       data: {
-        name,
-        description,
-        address,
-        city,
-        latitude,
-        longitude,
-        amenities: amenities ? JSON.stringify(amenities) : null,
+        name: parsedBody.data.name,
+        description: parsedBody.data.description,
+        address: parsedBody.data.address,
+        city: parsedBody.data.city,
+        latitude: parsedBody.data.latitude,
+        longitude: parsedBody.data.longitude,
+        amenities: parsedBody.data.amenities ? JSON.stringify(parsedBody.data.amenities) : null,
         connectors: {
-          create: connectors?.map((c: any) => ({
-            type: c.type,
-            powerOutput: c.powerOutput,
-            currentPrice: c.currentPrice,
-            status: c.status || 'AVAILABLE',
-          })) || [],
+          create: parsedBody.data.connectors.map((connector) => ({
+            type: connector.type,
+            powerOutput: connector.powerOutput,
+            currentPrice: connector.currentPrice,
+            status: connector.status || 'AVAILABLE',
+          })),
         },
       },
       include: {
@@ -87,29 +115,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(station, { status: 201 });
-  } catch (error) {
-    console.error('Error creating station:', error);
-    return NextResponse.json(
-      { error: 'Failed to create station' },
-      { status: 500 }
+    return jsonSuccess(
+      request,
+      {
+        success: true,
+        station,
+      },
+      { status: 201 }
     );
+  } catch (error) {
+    return handleRouteError(request, error, { route: '/api/stations' });
   }
-}
-
-// Calculate distance between two points using Haversine formula
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-function toRad(deg: number): number {
-  return deg * (Math.PI / 180);
 }

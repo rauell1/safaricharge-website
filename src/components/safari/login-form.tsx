@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Zap,
@@ -26,8 +25,6 @@ import {
   Phone,
   Building,
   CheckCircle,
-  Crown,
-  Star,
   KeyRound,
   RefreshCw,
   AlertCircle
@@ -81,30 +78,30 @@ export function Login({ onBack }: LoginProps) {
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
         // Check for pending approval error
-        if (data.pendingApproval) {
-          setError(data.error);
+        if (responseData.pendingApproval) {
+          setError(responseData.error);
         } else {
-          setError(data.error || 'Login failed');
+          setError(responseData.error || 'Login failed');
         }
         setIsLoading(false);
         return;
       }
 
       // Check if user can skip verification (already verified email)
-      if (data.skipVerification && data.user) {
+      if (responseData.skipVerification && responseData.user) {
         // Log in directly without 2FA
-        login(data.user as User);
+        login(responseData.user as User);
         setIsLoading(false);
         return;
       }
 
       // Show verification step for users who need it
-      setPendingUserId(data.userId);
-      setPendingEmail(data.email);
+      setPendingUserId(responseData.userId);
+      setPendingEmail(responseData.email);
       setAuthStep('verification');
       setIsLoading(false);
     } catch (err) {
@@ -128,16 +125,16 @@ export function Login({ onBack }: LoginProps) {
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Verification failed');
+        setError(responseData.error || 'Verification failed');
         setIsLoading(false);
         return;
       }
 
       // Log in the user
-      login(data.user as User);
+      login(responseData.user as User);
       setIsLoading(false);
     } catch (err) {
       setError('Failed to verify code');
@@ -168,108 +165,36 @@ export function Login({ onBack }: LoginProps) {
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Registration failed');
+        setError(responseData.error || 'Registration failed');
         setIsLoading(false);
         return;
       }
 
       // Check if this is an employee registration pending approval
-      if (data.isApproved === false && data.role === 'EMPLOYEE') {
+      if (responseData.isApproved === false && responseData.role === 'EMPLOYEE') {
         setError(null);
         // Show success message for employee pending approval
         toast.success('Employee account created! Pending admin approval.');
         // Redirect to a success/pending message
         setAuthStep('verification'); // Keep in verification flow to show message
-        setPendingEmail(data.email);
-        setPendingUserId(data.userId);
+        setPendingEmail(responseData.email);
+        setPendingUserId(responseData.userId);
         setIsLoading(false);
         return;
       }
 
       // Show verification step for new account
-      setPendingUserId(data.userId);
-      setPendingEmail(data.email);
+      setPendingUserId(responseData.userId);
+      setPendingEmail(responseData.email);
       setAuthStep('verification');
       setIsLoading(false);
     } catch (err) {
       setError('Failed to create account');
       setIsLoading(false);
     }
-  };
-
-  // Demo login (bypasses 2FA for demo users)
-  const handleDemoLogin = async (userType: 'admin' | 'premium' | 'driver' | 'fleet' | 'employee') => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const demoUsers: Record<string, User> = {
-      admin: {
-        id: 'demo-admin',
-        email: 'admin@safaricharge.co.ke',
-        name: 'Admin User',
-        role: 'ADMIN',
-        avatar: null,
-        phone: '+254 700 000 001',
-        subscriptionPlan: 'ENTERPRISE',
-        subscriptionExpiry: '2026-12-31',
-        hasPaidAccess: true,
-        accessPermissions: ['charging_map', 'battery_toolkit', 'analytics', 'user_management', 'fleet_management', 'employee_approval'],
-      },
-      employee: {
-        id: 'demo-employee',
-        email: 'employee@safaricharge.co.ke',
-        name: 'Employee User',
-        role: 'EMPLOYEE',
-        avatar: null,
-        phone: '+254 700 000 005',
-        subscriptionPlan: 'ENTERPRISE',
-        subscriptionExpiry: '2026-12-31',
-        hasPaidAccess: true,
-        accessPermissions: ['charging_map', 'battery_toolkit', 'analytics', 'fleet_management'],
-      },
-      premium: {
-        id: 'demo-premium',
-        email: 'premium@example.com',
-        name: 'Premium User',
-        role: 'DRIVER',
-        avatar: null,
-        phone: '+254 700 000 003',
-        subscriptionPlan: 'PREMIUM',
-        subscriptionExpiry: '2025-12-31',
-        hasPaidAccess: true,
-        accessPermissions: ['charging_map', 'battery_toolkit'],
-      },
-      driver: {
-        id: 'demo-driver',
-        email: 'driver@example.com',
-        name: 'John Driver',
-        role: 'DRIVER',
-        avatar: null,
-        phone: '+254 700 000 002',
-        subscriptionPlan: 'FREE',
-        subscriptionExpiry: null,
-        hasPaidAccess: false,
-        accessPermissions: ['charging_map'],
-      },
-      fleet: {
-        id: 'demo-fleet',
-        email: 'fleet@safaricharge.co.ke',
-        name: 'Fleet Manager',
-        role: 'FLEET_MANAGER',
-        avatar: null,
-        phone: '+254 700 000 004',
-        subscriptionPlan: 'ENTERPRISE', // ENTERPRISE for fleet, but NOT PREMIUM for battery
-        subscriptionExpiry: '2026-12-31',
-        hasPaidAccess: true,
-        accessPermissions: ['charging_map', 'fleet_management'], // No battery_toolkit
-      },
-    };
-
-    login(demoUsers[userType]);
-    setIsLoading(false);
   };
 
   const features = [
@@ -634,63 +559,6 @@ export function Login({ onBack }: LoginProps) {
                       Sign In
                     </Button>
 
-                    <Separator className="bg-[#8EB69B]/30" />
-
-                    <p className="text-xs text-center text-[#235347]">
-                      Quick Demo Access
-                    </p>
-
-                    <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handleDemoLogin('admin')}
-                        disabled={isLoading}
-                        className="w-full h-11 border-[#8EB69B] hover:bg-[#235347] hover:text-white hover:border-[#235347]"
-                      >
-                        <Crown className="h-4 w-4 mr-2 text-amber-500" />
-                        Admin Dashboard
-                      </Button>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleDemoLogin('employee')}
-                          disabled={isLoading}
-                          className="h-11 border-[#5483B3] hover:bg-[#5483B3] hover:text-white hover:border-[#5483B3]"
-                        >
-                          <Shield className="h-4 w-4 mr-2 text-[#5483B3]" />
-                          Employee
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleDemoLogin('fleet')}
-                          disabled={isLoading}
-                          className="h-11 border-[#8EB69B] hover:bg-[#235347] hover:text-white hover:border-[#235347]"
-                        >
-                          <Users className="h-4 w-4 mr-2 text-[#235347]" />
-                          Fleet
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          variant="outline"
-                          onClick={() => handleDemoLogin('premium')}
-                          disabled={isLoading}
-                          className="h-11 border-[#8EB69B] hover:bg-[#235347] hover:text-white hover:border-[#235347]"
-                        >
-                          <Star className="h-4 w-4 mr-2 text-purple-500" />
-                          Premium
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          onClick={() => handleDemoLogin('driver')}
-                          disabled={isLoading}
-                          className="h-11 border-[#8EB69B] hover:bg-[#235347] hover:text-white hover:border-[#235347]"
-                        >
-                          <UserIcon className="h-4 w-4 mr-2" />
-                          Free User
-                        </Button>
-                      </div>
-                    </div>
                   </TabsContent>
 
                   <TabsContent value="register" className="p-6 pt-4 space-y-4">

@@ -1,20 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { env } from '@/lib/env';
+import { cleanupExpiredSessions } from '@/lib/session';
+import { processPendingJobs } from '@/lib/jobs';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-export async function GET(req: NextRequest) {
-  // Verify the request is authorized
-  const authHeader = req.headers.get('Authorization');
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    const expectedAuth = `Bearer ${env.CRON_SECRET}`;
 
-  if (authHeader !== expectedAuth) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    if (authHeader !== expectedAuth) {
+      return jsonError(request, 'Unauthorized.', 401);
+    }
+
+    const [expiredSessionsDeleted, jobResult] = await Promise.all([
+      cleanupExpiredSessions(),
+      processPendingJobs(),
+    ]);
+
+    logger.info('Cron maintenance completed', {
+      expiredSessionsDeleted,
+      jobResult,
+    });
+
+    return jsonSuccess(request, {
+      success: true,
+      expiredSessionsDeleted,
+      jobs: jobResult,
+    });
+  } catch (error) {
+    return handleRouteError(request, error, { route: '/api/cron' });
   }
-
-  // Your cron job logic here
-  // This runs daily at 10:00 AM UTC
-  console.log('Cron job executed at:', new Date().toISOString());
-
-  return NextResponse.json({ ok: true });
 }

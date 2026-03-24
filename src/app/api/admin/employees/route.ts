@@ -1,93 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { createPaginationMeta, handleRouteError, jsonSuccess, parsePagination } from '@/lib/api';
 
-/**
- * GET - List all employees (Admin only)
- * This route should only be accessible by ADMIN role
- */
 export async function GET(request: NextRequest) {
   try {
-    // Get requester info from query params
+    await requireAdminUser(request);
+
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('requesterId');
-    const requesterRole = searchParams.get('requesterRole');
     const status = searchParams.get('status') || 'all';
+    const search = searchParams.get('search')?.trim();
+    const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    // Validate admin access
-    if (requesterRole !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
-
-    // Verify the requester exists and is actually an admin
-    if (requesterId) {
-      const requester = await db.user.findUnique({
-        where: { id: requesterId },
-        select: { role: true, isBlocked: true },
-      });
-
-      if (!requester || requester.role !== 'ADMIN' || requester.isBlocked) {
-        return NextResponse.json(
-          { error: 'Unauthorized. Admin access required.' },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Build where clause
-    const whereClause: Record<string, unknown> = {
+    const where = {
       role: 'EMPLOYEE',
+      ...(status === 'pending' ? { isApproved: false } : {}),
+      ...(status === 'approved' ? { isApproved: true } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search } },
+              { email: { contains: search } },
+              { phone: { contains: search } },
+            ],
+          }
+        : {}),
     };
 
-    if (status === 'pending') {
-      whereClause.isApproved = false;
-    } else if (status === 'approved') {
-      whereClause.isApproved = true;
-    }
-
-    // Fetch employees
-    const employees = await db.user.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        isApproved: true,
-        securityLevel: true,
-        requestedRole: true,
-        createdAt: true,
-        approvedAt: true,
-        approvedBy: true,
-        isBlocked: true,
-        accessPermissions: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // Get statistics
-    const [total, pending, approved] = await Promise.all([
-      db.user.count({ where: { role: 'EMPLOYEE' } }),
+    const [employees, total, pending, approved] = await Promise.all([
+      db.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+          isApproved: true,
+          securityLevel: true,
+          requestedRole: true,
+          createdAt: true,
+          approvedAt: true,
+          approvedBy: true,
+          isBlocked: true,
+          accessPermissions: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      db.user.count({ where }),
       db.user.count({ where: { role: 'EMPLOYEE', isApproved: false } }),
       db.user.count({ where: { role: 'EMPLOYEE', isApproved: true } }),
     ]);
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
+      success: true,
       employees,
       stats: {
         total,
         pending,
         approved,
       },
+      pagination: createPaginationMeta(total, page, pageSize),
     });
   } catch (error) {
-    console.error('Error fetching employees:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch employees' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/employees' });
   }
 }

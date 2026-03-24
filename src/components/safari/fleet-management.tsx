@@ -170,12 +170,12 @@ export function FleetManagement({ user }: FleetManagementProps) {
   const fetchFleets = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/fleet?userId=${user?.id}&role=${user?.role}`);
-      const data = await response.json();
+      const response = await fetch('/api/fleet');
+      const responseData = await response.json();
       
       if (response.ok) {
-        setFleets(data.fleets || []);
-        setStats(data.stats || stats);
+        setFleets(responseData.fleets || []);
+        setStats(responseData.stats || stats);
       } else {
         toast.error('Failed to load fleets');
       }
@@ -190,11 +190,11 @@ export function FleetManagement({ user }: FleetManagementProps) {
   // Fetch vehicles for selected fleet
   const fetchVehicles = async (fleetId: string) => {
     try {
-      const response = await fetch(`/api/fleet/vehicles?fleetId=${fleetId}&userId=${user?.id}&role=${user?.role}`);
-      const data = await response.json();
+      const response = await fetch(`/api/fleet/vehicles?fleetId=${fleetId}`);
+      const responseData = await response.json();
       
       if (response.ok) {
-        setVehicles(data.vehicles || []);
+        setVehicles(responseData.vehicles || []);
       }
     } catch (error) {
       console.error('Error fetching vehicles:', error);
@@ -235,7 +235,7 @@ export function FleetManagement({ user }: FleetManagementProps) {
         })
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('Fleet created successfully!', {
@@ -253,14 +253,14 @@ export function FleetManagement({ user }: FleetManagementProps) {
         });
         fetchFleets();
       } else {
-        if (data.fleet) {
+        if (responseData.fleet) {
           // User already has a fleet
           toast.info('You already have a fleet', {
             description: 'Redirecting to your fleet...'
           });
           fetchFleets();
         } else {
-          toast.error(data.error || 'Failed to create fleet');
+          toast.error(responseData.error || 'Failed to create fleet');
         }
       }
     } catch (error) {
@@ -297,7 +297,7 @@ export function FleetManagement({ user }: FleetManagementProps) {
         })
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('Vehicle added successfully!');
@@ -315,7 +315,7 @@ export function FleetManagement({ user }: FleetManagementProps) {
         fetchVehicles(selectedFleet.id);
         fetchFleets();
       } else {
-        toast.error(data.error || 'Failed to add vehicle');
+        toast.error(responseData.error || 'Failed to add vehicle');
       }
     } catch (error) {
       toast.error('Failed to add vehicle');

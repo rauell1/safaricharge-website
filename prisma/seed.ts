@@ -1,27 +1,27 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { env } from '../src/lib/env';
+import { hashPasswordForStorage } from '../src/lib/auth';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
-  // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@safaricharge.com' },
+  const adminPassword = hashPasswordForStorage('admin123');
+  await prisma.user.upsert({
+    where: { email: env.MAIN_ADMIN_EMAIL },
     update: {},
     create: {
-      email: 'admin@safaricharge.com',
+      email: env.MAIN_ADMIN_EMAIL,
       name: 'Admin User',
       password: adminPassword,
       role: 'ADMIN',
       phone: '+254 720 000 000',
+      isEmailVerified: true,
     },
   });
 
-  // Create driver user
-  const driverPassword = await bcrypt.hash('driver123', 10);
+  const driverPassword = hashPasswordForStorage('driver123');
   const driver = await prisma.user.upsert({
     where: { email: 'driver@example.com' },
     update: {},
@@ -31,12 +31,12 @@ async function main() {
       password: driverPassword,
       role: 'DRIVER',
       phone: '+254 712 345 678',
+      isEmailVerified: true,
     },
   });
 
-  // Create fleet manager
-  const fleetPassword = await bcrypt.hash('fleet123', 10);
-  const fleetManager = await prisma.user.upsert({
+  const fleetPassword = hashPasswordForStorage('fleet123');
+  await prisma.user.upsert({
     where: { email: 'fleet@logistics.com' },
     update: {},
     create: {
@@ -45,10 +45,10 @@ async function main() {
       password: fleetPassword,
       role: 'FLEET_MANAGER',
       phone: '+254 733 222 111',
+      isEmailVerified: true,
     },
   });
 
-  // Create charging stations
   await Promise.all([
     prisma.chargingStation.upsert({
       where: { id: 'station-1' },
@@ -78,7 +78,7 @@ async function main() {
         address: '45 Westlands Road',
         city: 'Nairobi',
         latitude: -1.2634,
-        longitude: 36.8030,
+        longitude: 36.803,
         status: 'AVAILABLE',
         rating: 4.5,
         reviewCount: 156,
@@ -113,8 +113,8 @@ async function main() {
         description: 'Full service station with vehicle maintenance and charging capabilities.',
         address: 'Mombasa Road Highway',
         city: 'Nairobi',
-        latitude: -1.3310,
-        longitude: 36.8940,
+        latitude: -1.331,
+        longitude: 36.894,
         status: 'AVAILABLE',
         rating: 4.3,
         reviewCount: 67,
@@ -149,8 +149,8 @@ async function main() {
         description: 'High-capacity charging for fleet vehicles and heavy-duty equipment.',
         address: 'Industrial Area Zone A',
         city: 'Nairobi',
-        latitude: -1.3050,
-        longitude: 36.8550,
+        latitude: -1.305,
+        longitude: 36.855,
         status: 'AVAILABLE',
         rating: 4.2,
         reviewCount: 45,
@@ -160,30 +160,23 @@ async function main() {
     }),
   ]);
 
-  // Create connectors for each station
   const connectorData = [
-    // Station 1
     { id: 'conn-1', stationId: 'station-1', type: 'CCS2' as const, powerOutput: 150, currentPrice: 0.35, status: 'AVAILABLE' as const },
     { id: 'conn-2', stationId: 'station-1', type: 'CCS2' as const, powerOutput: 150, currentPrice: 0.35, status: 'OCCUPIED' as const },
-    { id: 'conn-3', stationId: 'station-1', type: 'CHADEMO' as const, powerOutput: 100, currentPrice: 0.30, status: 'AVAILABLE' as const },
+    { id: 'conn-3', stationId: 'station-1', type: 'CHADEMO' as const, powerOutput: 100, currentPrice: 0.3, status: 'AVAILABLE' as const },
     { id: 'conn-4', stationId: 'station-1', type: 'TYPE2' as const, powerOutput: 22, currentPrice: 0.25, status: 'AVAILABLE' as const },
-    // Station 2
     { id: 'conn-5', stationId: 'station-2', type: 'CCS2' as const, powerOutput: 50, currentPrice: 0.32, status: 'AVAILABLE' as const },
     { id: 'conn-6', stationId: 'station-2', type: 'TYPE2' as const, powerOutput: 22, currentPrice: 0.25, status: 'AVAILABLE' as const },
-    // Station 3
     { id: 'conn-7', stationId: 'station-3', type: 'CCS2' as const, powerOutput: 150, currentPrice: 0.38, status: 'OCCUPIED' as const },
     { id: 'conn-8', stationId: 'station-3', type: 'CCS2' as const, powerOutput: 150, currentPrice: 0.38, status: 'OCCUPIED' as const },
     { id: 'conn-9', stationId: 'station-3', type: 'TESLA' as const, powerOutput: 250, currentPrice: 0.42, status: 'AVAILABLE' as const },
-    // Station 4
     { id: 'conn-10', stationId: 'station-4', type: 'CCS2' as const, powerOutput: 100, currentPrice: 0.33, status: 'AVAILABLE' as const },
-    { id: 'conn-11', stationId: 'station-4', type: 'CHADEMO' as const, powerOutput: 100, currentPrice: 0.30, status: 'MAINTENANCE' as const },
+    { id: 'conn-11', stationId: 'station-4', type: 'CHADEMO' as const, powerOutput: 100, currentPrice: 0.3, status: 'MAINTENANCE' as const },
     { id: 'conn-12', stationId: 'station-4', type: 'TYPE2' as const, powerOutput: 22, currentPrice: 0.25, status: 'AVAILABLE' as const },
-    // Station 5
     { id: 'conn-13', stationId: 'station-5', type: 'TYPE2' as const, powerOutput: 22, currentPrice: 0.22, status: 'AVAILABLE' as const },
-    { id: 'conn-14', stationId: 'station-5', type: 'TYPE2' as const, powerOutput: 11, currentPrice: 0.20, status: 'AVAILABLE' as const },
-    // Station 6
-    { id: 'conn-15', stationId: 'station-6', type: 'CCS2' as const, powerOutput: 350, currentPrice: 0.40, status: 'AVAILABLE' as const },
-    { id: 'conn-16', stationId: 'station-6', type: 'CCS2' as const, powerOutput: 350, currentPrice: 0.40, status: 'AVAILABLE' as const },
+    { id: 'conn-14', stationId: 'station-5', type: 'TYPE2' as const, powerOutput: 11, currentPrice: 0.2, status: 'AVAILABLE' as const },
+    { id: 'conn-15', stationId: 'station-6', type: 'CCS2' as const, powerOutput: 350, currentPrice: 0.4, status: 'AVAILABLE' as const },
+    { id: 'conn-16', stationId: 'station-6', type: 'CCS2' as const, powerOutput: 350, currentPrice: 0.4, status: 'AVAILABLE' as const },
     { id: 'conn-17', stationId: 'station-6', type: 'CHADEMO' as const, powerOutput: 200, currentPrice: 0.35, status: 'OFFLINE' as const },
   ];
 
@@ -195,7 +188,6 @@ async function main() {
     });
   }
 
-  // Create some charging sessions
   const sessions = [
     {
       id: 'session-1',
@@ -240,16 +232,16 @@ async function main() {
     });
   }
 
-  console.log('✅ Database seeded successfully!');
-  console.log('\n📋 Test Accounts:');
-  console.log('  Admin: admin@safaricharge.com / admin123');
+  console.log('Database seeded successfully.');
+  console.log('\nTest Accounts:');
+  console.log(`  Admin: ${env.MAIN_ADMIN_EMAIL} / admin123`);
   console.log('  Driver: driver@example.com / driver123');
   console.log('  Fleet Manager: fleet@logistics.com / fleet123');
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {

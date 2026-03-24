@@ -94,11 +94,11 @@ export function EmployeeApprovalDashboard() {
   const fetchEmployees = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/employees?status=${activeTab}`);
-      const data = await response.json();
+      const responseData = await response.json();
       
       if (response.ok) {
-        setEmployees(data.employees);
-        setStats(data.stats);
+        setEmployees(responseData.employees);
+        setStats(responseData.stats);
       } else {
         toast.error('Failed to fetch employees');
       }
@@ -136,14 +136,14 @@ export function EmployeeApprovalDashboard() {
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('Employee approved successfully');
         setIsApproveDialogOpen(false);
         fetchEmployees();
       } else {
-        toast.error(data.error || 'Failed to approve employee');
+        toast.error(responseData.error || 'Failed to approve employee');
       }
     } catch (error) {
       console.error('Error approving employee:', error);
@@ -164,14 +164,14 @@ export function EmployeeApprovalDashboard() {
         body: JSON.stringify({ employeeId: selectedEmployee.id }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('Employee application rejected');
         setIsRejectDialogOpen(false);
         fetchEmployees();
       } else {
-        toast.error(data.error || 'Failed to reject employee');
+        toast.error(responseData.error || 'Failed to reject employee');
       }
     } catch (error) {
       console.error('Error rejecting employee:', error);
@@ -189,13 +189,13 @@ export function EmployeeApprovalDashboard() {
         body: JSON.stringify({ securityLevel }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('Security level updated');
         fetchEmployees();
       } else {
-        toast.error(data.error || 'Failed to update security level');
+        toast.error(responseData.error || 'Failed to update security level');
       }
     } catch (error) {
       console.error('Error updating security level:', error);

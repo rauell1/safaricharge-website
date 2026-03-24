@@ -1,196 +1,178 @@
-# ⚡ SafariCharge
+# SafariCharge
 
-A production-ready EV charging platform for Africa, built with Next.js 16, TypeScript, Prisma, and Tailwind CSS.
+SafariCharge is a Next.js 16 EV charging platform for drivers, fleet managers, operations staff, and administrators. The application includes public charging discovery, secure authentication, fleet operations, admin approval flows, and background email processing.
 
----
+This repository now includes a production audit and a durable project map so future work can start from architecture context instead of rescanning the full codebase.
 
-## ✨ Features
+## Core Features
 
-- **Charging Station Map** — Browse and find nearby EV charging stations
-- **Charging Session Management** — Start, monitor, and end sessions
-- **User Authentication** — Email-based registration with 2FA verification
-- **Role-Based Access Control** — Driver, Fleet Manager, Employee, and Admin roles
-- **Fleet Management** — Manage vehicle fleets with live status tracking
-- **AI Analytics Dashboard** — Usage analytics and predictive insights (admin/employee)
-- **Battery Repurposing Toolkit** — Battery health and second-life management (premium)
-- **Admin Panel** — User management, employee approval, and role assignment
-- **Email Notifications** — Transactional email via [Resend](https://resend.com)
-- **Dark / Light Mode** — Automatic theme support via `next-themes`
+- Charging station discovery and filtering
+- Charging session creation and completion
+- Fleet and vehicle management
+- Admin user management and employee approval
+- Email verification and transactional email delivery
+- Server-backed session authentication with httpOnly cookies
+- Structured health checks and background maintenance jobs
 
----
+## Tech Stack
 
-## 🛠️ Technology Stack
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS and shadcn/ui
+- Prisma
+- Zustand
+- Resend
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS 4 + shadcn/ui |
-| Database | SQLite (dev) / PostgreSQL (prod) via Prisma |
-| Auth | Custom session (scrypt password hashing, 2FA) |
-| State | Zustand |
-| Data Fetching | TanStack Query |
-| Email | Resend |
-| Maps | React Leaflet |
-| Charts | Recharts |
-| Runtime | Bun |
+## Repository Docs
 
----
+- `docs/PROJECT_REFERENCE.md`
+  - Quick architecture reference for future prompts and onboarding.
+- `docs/PRODUCTION_AUDIT.md`
+  - Structural, security, and scalability audit plus recommended next steps.
 
-## �� Quick Start
+## Getting Started
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) ≥ 1.x
-- Node.js ≥ 20 (if not using Bun exclusively)
+- Node.js 20+ for the web app
+- Bun if you want to run the current seed script directly
 
-### Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/rauell1/Coding.git
-cd Coding/safaricharge-website
-
-# 2. Install dependencies
-bun install
-
-# 3. Configure environment variables
-cp .env.example .env
-# Edit .env with your actual values (see Environment Variables section below)
-
-# 4. Set up the database
-bun run db:push          # Apply schema to DB
-bun run db:seed          # Seed initial data (optional)
-
-# 5. Start the development server
-bun run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## 🔐 Environment Variables
-
-Copy `.env.example` to `.env` and set the following:
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | ✅ | SQLite (`file:./db/safaricharge.db`) or PostgreSQL connection string |
-| `NEXT_PUBLIC_APP_URL` | ✅ | Full public URL of the app (e.g. `https://safaricharge.co.ke`) |
-| `MAIN_ADMIN_EMAIL` | ✅ | Email that receives ADMIN role on first registration |
-| `RESEND_API_KEY` | ⚠️ | [Resend](https://resend.com) API key — required for transactional email |
-| `NEXT_PUBLIC_APP_NAME` | — | Display name (default: `SafariCharge`) |
-| `NEXT_PUBLIC_APP_VERSION` | — | Shown on the health check endpoint |
-
-> **Security:** Never commit your `.env` file. The `.gitignore` should already exclude it.
-
----
-
-## �� Folder Structure
-
-```
-safaricharge-website/
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── seed.ts                # Seed script
-├── public/                    # Static assets
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── route.ts       # Health check: GET /api
-│   │   │   ├── auth/          # Auth endpoints (login, register, verify, me)
-│   │   │   ├── admin/         # Admin-only endpoints (users, employees)
-│   │   │   ├── email/         # Transactional email endpoint
-│   │   │   ├── fleet/         # Fleet management endpoints
-│   │   │   ├── sessions/      # Charging session endpoints
-│   │   │   └── stations/      # Charging station endpoints
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx           # Main single-page application entry
-│   ├── components/
-│   │   ├── safari/            # Feature-specific components
-│   │   └── ui/                # shadcn/ui base components
-│   ├── contexts/              # React contexts (currency, etc.)
-│   ├── data/                  # Static / mock data
-│   ├── hooks/                 # Custom React hooks
-│   ├── lib/
-│   │   ├── auth.ts            # Password hashing, session verification
-│   │   ├── db.ts              # Prisma client singleton
-│   │   ├── security.ts        # Validation, sanitization, rate limiting
-│   │   └── utils.ts           # General utilities (cn helper)
-│   ├── middleware.ts           # Security headers, request logging
-│   ├── stores/
-│   │   └── auth-store.ts      # Zustand auth store
-│   └── types/
-│       └── index.ts           # Shared TypeScript types
-├── .env.example               # Environment variable template
-├── next.config.ts
-├── tailwind.config.ts
-└── tsconfig.json
-```
-
----
-
-## 🗄️ Database Commands
+### Install
 
 ```bash
-bun run db:push       # Push schema changes (no migration history)
-bun run db:migrate    # Create and apply a migration
-bun run db:generate   # Re-generate Prisma client after schema changes
-bun run db:seed       # Seed the database with initial data
-bun run db:reset      # Reset DB and re-apply migrations (⚠️ destructive)
+npm install
 ```
 
----
+### Configure environment
 
-## 🏗️ Build & Deploy
+```powershell
+Copy-Item .env.example .env
+```
 
-### Build for production
+Fill in the values in `.env`.
+
+### Prisma setup
 
 ```bash
-bun run build
+npx prisma generate
+npx prisma db push
 ```
 
-### Start the production server (standalone mode)
+Optional seed:
 
 ```bash
-bun run start
+bun run db:seed
 ```
 
-### Deploy with Caddy (recommended)
-
-A `Caddyfile.txt` template is included. To use it:
-
-1. Rename it to `Caddyfile`
-2. Replace `your-domain.com` with your actual domain name (e.g. `safaricharge.co.ke`)
-3. Run:
+### Start the app
 
 ```bash
-caddy run
+npm run dev
 ```
 
-Caddy automatically provisions HTTPS via Let's Encrypt when a real domain name is used.  
-For local testing without a domain, set the site address to `:80` instead.
+### Production build
 
----
+```bash
+npm run build
+npm run start
+```
 
-## 🔒 Security Notes
+## Environment Variables
 
-- Passwords are hashed with **scrypt** (Node.js `crypto` module) — not bcrypt
-- 2FA codes expire after **10 minutes**
-- Security headers (CSP, X-Frame-Options, etc.) are applied via `next.config.ts` and `middleware.ts`
-- Rate limiting is in-memory by default — replace `rateLimitStore` in `src/lib/security.ts` with Redis for production
-- The `/api` route serves a **health check** (`GET /api`) that also validates database connectivity
+The canonical template lives in `.env.example`.
 
----
+Key variables:
 
-## 🤝 Contributing
+- `DATABASE_URL`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_APP_NAME`
+- `NEXT_PUBLIC_APP_VERSION`
+- `MAIN_ADMIN_EMAIL`
+- `SESSION_SECRET`
+- `SESSION_COOKIE_NAME`
+- `ALLOWED_ORIGINS`
+- `RESEND_API_KEY`
+- `CRON_SECRET`
+- `ENABLE_DEMO_USERS`
 
-Pull requests are welcome. Please open an issue first to discuss major changes.
+Optional future storage variables:
 
----
+- `S3_BUCKET`
+- `S3_REGION`
+- `S3_ENDPOINT`
+- `S3_PUBLIC_BASE_URL`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
-## 📄 License
+## Current Structure
 
-Private — © SafariCharge Ltd. All rights reserved.
+```text
+prisma/
+  schema.prisma
+  seed.ts
+src/
+  app/
+    api/
+    error.tsx
+    not-found.tsx
+    layout.tsx
+    page.tsx
+  components/
+    safari/
+    ui/
+  contexts/
+  data/
+  hooks/
+  lib/
+  stores/
+  types/
+  proxy.ts
+docs/
+  PROJECT_REFERENCE.md
+  PRODUCTION_AUDIT.md
+```
+
+## Important Runtime Notes
+
+- Authentication is session-cookie based, not localStorage based.
+- Protected API routes should use `requireUser()` or `requireRole()`.
+- Input validation should use shared Zod schemas from `src/lib/validation.ts`.
+- Background email work is queued through the `Job` model and drained by the cron route.
+- `GET /api` is the health check endpoint.
+
+## Deployment
+
+### Vercel
+
+Required settings:
+
+1. Root Directory: `safaricharge-website`
+2. Framework Preset: `Next.js`
+3. No custom Output Directory override
+
+This repo includes `vercel.json` to force a normal Next.js build path.
+
+### Recommended production infrastructure
+
+- Managed Postgres instead of SQLite
+- Shared rate limiting store such as Redis or Upstash
+- Object storage plus CDN for future file uploads
+- Centralized logging and monitoring
+
+## Security Notes
+
+- Passwords use scrypt-based hashing
+- Sessions are stored server-side in the database
+- Cookies are httpOnly and secure in production
+- Role-based access is enforced on the server
+- Rate limiting is enabled for high-risk routes
+- Environment configuration is validated at startup
+
+## Next Recommended Steps
+
+1. Move Prisma from SQLite to managed Postgres before launch.
+2. Replace in-memory rate limiting and queue coordination with shared infrastructure.
+3. Run a full build, lint, and Prisma generate in an environment with Node or Bun installed.
+4. Split the single-page authenticated shell into feature routes.
+5. Add password reset flows and storage-backed uploads when the required infrastructure is ready.

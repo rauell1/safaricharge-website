@@ -1,18 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireFleetAccess, requireUser } from '@/lib/access-control';
+import { createFleetSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
+import { createPaginationMeta, handleRouteError, jsonError, jsonSuccess, parsePagination } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-// GET - List all fleets (for admin/employee view) or own fleet (for fleet manager)
+function canReadAllFleets(role: string) {
+  return role === 'ADMIN' || role === 'EMPLOYEE';
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireFleetAccess(request);
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
-    
-    let fleets;
-    
-    if (role === 'ADMIN' || role === 'EMPLOYEE') {
-      // Admin and Employee can see all fleets
-      fleets = await db.fleet.findMany({
+    const { page, pageSize, skip, take } = parsePagination(searchParams);
+
+    const where = canReadAllFleets(session.user.role)
+      ? {}
+      : {
+          ownerId: session.user.id,
+        };
+
+    const [fleets, total, categoryCounts, stats] = await Promise.all([
+      db.fleet.findMany({
+        where,
         include: {
           owner: {
             select: {
@@ -20,134 +31,78 @@ export async function GET(request: NextRequest) {
               email: true,
               name: true,
               phone: true,
-            }
+            },
           },
           _count: {
-            select: { vehicles: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-    } else if (role === 'FLEET_MANAGER' && userId) {
-      // Fleet Manager can only see their own fleet
-      fleets = await db.fleet.findMany({
-        where: { ownerId: userId },
-        include: {
-          owner: {
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              phone: true,
-            }
+            select: { vehicles: true },
           },
-          _count: {
-            select: { vehicles: true }
-          }
         },
-        orderBy: { createdAt: 'desc' }
-      });
-    } else {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    // Get fleet stats
-    const stats = await db.fleet.aggregate({
-      _count: { id: true },
-      _sum: { totalVehicles: true, totalEnergy: true, totalDistance: true }
-    });
-    
-    // Count by category
-    const categoryCounts = await db.fleet.groupBy({
-      by: ['category'],
-      _count: { id: true }
-    });
-    
-    return NextResponse.json({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      db.fleet.count({ where }),
+      db.fleet.groupBy({
+        by: ['category'],
+        where,
+        _count: { id: true },
+      }),
+      db.fleet.aggregate({
+        where,
+        _count: { id: true },
+        _sum: { totalVehicles: true, totalEnergy: true, totalDistance: true },
+      }),
+    ]);
+
+    return jsonSuccess(request, {
+      success: true,
       fleets,
       stats: {
         totalFleets: stats._count.id,
         totalVehicles: stats._sum.totalVehicles || 0,
         totalEnergy: stats._sum.totalEnergy || 0,
         totalDistance: stats._sum.totalDistance || 0,
-        categoryCounts
-      }
+        categoryCounts,
+      },
+      pagination: createPaginationMeta(total, page, pageSize),
     });
   } catch (error) {
-    console.error('Error fetching fleets:', error);
-    return NextResponse.json({ error: 'Failed to fetch fleets' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet' });
   }
 }
 
-// POST - Create a new fleet (for fleet manager onboarding)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, description, category, ownerId, contactEmail, contactPhone, address, city } = body;
-    
-    if (!name || !ownerId) {
-      return NextResponse.json({ error: 'Fleet name and owner ID are required' }, { status: 400 });
+    const session = await requireUser(request);
+
+    if (!['FLEET_MANAGER', 'ADMIN'].includes(session.user.role)) {
+      return jsonError(request, 'Only fleet managers can create fleets.', 403);
     }
-    
-    // Check if user already has a fleet
+
+    const parsedBody = createFleetSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid fleet payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
+    }
+
     const existingFleet = await db.fleet.findFirst({
-      where: { ownerId }
+      where: { ownerId: session.user.id },
     });
-    
+
     if (existingFleet) {
-      return NextResponse.json({ error: 'User already has a fleet', fleet: existingFleet }, { status: 400 });
+      return jsonError(request, 'This user already has a fleet.', 409, {
+        fleetId: existingFleet.id,
+      });
     }
-    
-    // Check if user exists in database
-    let user = await db.user.findUnique({
-      where: { id: ownerId }
-    });
-    
-    // For demo users, create a user record if they don't exist
-    if (!user && ownerId.startsWith('demo-')) {
-      const demoEmail = ownerId === 'demo-fleet' ? 'fleet@safaricharge.co.ke' : `demo-${ownerId}@demo.com`;
-      const demoName = ownerId === 'demo-fleet' ? 'Fleet Manager' : 'Demo User';
-      
-      try {
-        user = await db.user.create({
-          data: {
-            id: ownerId,
-            email: demoEmail,
-            name: demoName,
-            password: 'demo-password',
-            role: 'FLEET_MANAGER',
-            subscriptionPlan: 'ENTERPRISE',
-            hasPaidAccess: true,
-            accessPermissions: 'charging_map,fleet_management',
-            isEmailVerified: true,
-            isApproved: true,
-          }
-        });
-        console.log(`🆕 Created demo user: ${demoEmail}`);
-      } catch (createError) {
-        console.error('Error creating demo user:', createError);
-        return NextResponse.json({ error: 'Failed to create demo user' }, { status: 500 });
-      }
-    }
-    
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-    
-    if (user.role !== 'FLEET_MANAGER') {
-      return NextResponse.json({ error: 'Only fleet managers can create fleets' }, { status: 400 });
-    }
-    
+
     const fleet = await db.fleet.create({
       data: {
-        name,
-        description,
-        category: category || 'PERSONAL',
-        ownerId,
-        contactEmail,
-        contactPhone,
-        address,
-        city
+        ...parsedBody.data,
+        ownerId: session.user.id,
+        contactEmail: parsedBody.data.contactEmail || session.user.email,
+        contactPhone: parsedBody.data.contactPhone || session.user.phone,
       },
       include: {
         owner: {
@@ -155,69 +110,103 @@ export async function POST(request: NextRequest) {
             id: true,
             email: true,
             name: true,
-            phone: true
-          }
-        }
-      }
+            phone: true,
+          },
+        },
+      },
     });
-    
-    console.log(`🚗 Fleet created: ${name} by ${user.email}`);
-    
-    return NextResponse.json({ success: true, fleet });
+
+    logger.info('Fleet created', { ownerId: session.user.id, fleetId: fleet.id });
+
+    return jsonSuccess(
+      request,
+      {
+        success: true,
+        fleet,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Error creating fleet:', error);
-    return NextResponse.json({ error: 'Failed to create fleet' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet' });
   }
 }
 
-// PUT - Update fleet
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { fleetId, name, description, category, contactEmail, contactPhone, address, city } = body;
-    
+    const session = await requireFleetAccess(request);
+    const body = (await request.json()) as { fleetId?: string } & Record<string, unknown>;
+    const fleetId = typeof body.fleetId === 'string' ? body.fleetId : undefined;
+
     if (!fleetId) {
-      return NextResponse.json({ error: 'Fleet ID is required' }, { status: 400 });
+      return jsonError(request, 'Fleet ID is required.', 400);
     }
-    
+
+    const existingFleet = await db.fleet.findUnique({
+      where: { id: fleetId },
+    });
+
+    if (!existingFleet) {
+      return jsonError(request, 'Fleet not found.', 404);
+    }
+
+    const canManageFleet = canReadAllFleets(session.user.role) || existingFleet.ownerId === session.user.id;
+    if (!canManageFleet) {
+      return jsonError(request, 'You do not have permission to update this fleet.', 403);
+    }
+
+    const parsedBody = createFleetSchema.partial().safeParse(body);
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid fleet update payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
+    }
+
     const fleet = await db.fleet.update({
       where: { id: fleetId },
-      data: {
-        name,
-        description,
-        category,
-        contactEmail,
-        contactPhone,
-        address,
-        city
-      }
+      data: parsedBody.data,
     });
-    
-    return NextResponse.json({ success: true, fleet });
+
+    return jsonSuccess(request, {
+      success: true,
+      fleet,
+    });
   } catch (error) {
-    console.error('Error updating fleet:', error);
-    return NextResponse.json({ error: 'Failed to update fleet' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet' });
   }
 }
 
-// DELETE - Delete fleet
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const fleetId = searchParams.get('fleetId');
-    
+    const session = await requireFleetAccess(request);
+    const fleetId = new URL(request.url).searchParams.get('fleetId');
+
     if (!fleetId) {
-      return NextResponse.json({ error: 'Fleet ID is required' }, { status: 400 });
+      return jsonError(request, 'Fleet ID is required.', 400);
     }
-    
-    // Delete all vehicles and charging sessions first (cascade)
-    await db.fleet.delete({
-      where: { id: fleetId }
+
+    const fleet = await db.fleet.findUnique({
+      where: { id: fleetId },
     });
-    
-    return NextResponse.json({ success: true });
+
+    if (!fleet) {
+      return jsonError(request, 'Fleet not found.', 404);
+    }
+
+    const canDeleteFleet = canReadAllFleets(session.user.role) || fleet.ownerId === session.user.id;
+    if (!canDeleteFleet) {
+      return jsonError(request, 'You do not have permission to delete this fleet.', 403);
+    }
+
+    await db.fleet.delete({
+      where: { id: fleetId },
+    });
+
+    logger.info('Fleet deleted', { actorUserId: session.user.id, fleetId });
+
+    return jsonSuccess(request, {
+      success: true,
+    });
   } catch (error) {
-    console.error('Error deleting fleet:', error);
-    return NextResponse.json({ error: 'Failed to delete fleet' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet' });
   }
 }

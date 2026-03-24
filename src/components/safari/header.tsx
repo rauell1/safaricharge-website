@@ -26,7 +26,6 @@ import {
   Zap, 
   Menu, 
   LogOut, 
-  Settings, 
   Bell,
   BarChart3,
   Users,
@@ -352,12 +351,10 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-gray-100" />
-              <DropdownMenuItem onClick={() => handleNavClick('profile')} className="cursor-pointer text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-100" />
-              <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer focus:bg-red-50 focus:text-red-600">
+              <DropdownMenuItem
+                onClick={() => void logout()}
+                className="text-red-500 cursor-pointer focus:bg-red-50 focus:text-red-600"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>

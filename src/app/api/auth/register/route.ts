@@ -1,106 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { generateVerificationCode, hashPasswordForStorage } from '@/lib/auth';
+import { RATE_LIMIT_CONFIG } from '@/lib/config';
 import { db } from '@/lib/db';
-import { hashPasswordForStorage, generateVerificationCode, formatUserResponse } from '@/lib/auth';
-import { 
-  isValidEmail, 
-  sanitizeEmail, 
-  sanitizeString, 
+import { enqueueEmailJob } from '@/lib/jobs';
+import { getClientIp, handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import {
+  MAIN_ADMIN_EMAIL,
+  checkRateLimit,
+  getVerificationCodeExpiry,
+  sanitizeEmail,
   sanitizePhone,
+  sanitizeString,
   validatePassword,
-  MAIN_ADMIN_EMAIL 
 } from '@/lib/security';
+import { registerSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
-// Types matching Prisma schema
 type UserRole = 'DRIVER' | 'ADMIN' | 'FLEET_MANAGER' | 'EMPLOYEE';
 type SecurityLevel = 'BASIC' | 'STANDARD' | 'ELEVATED' | 'MANAGER' | 'SUPERVISOR';
 
-// Helper function to send email
-async function sendEmail(type: string, to: string | string[], data: Record<string, unknown>) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-      
-    const response = await fetch(`${baseUrl}/api/email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, to, data }),
-    });
-    
-    const result = await response.json();
-    if (!response.ok) {
-      console.error('Email send failed:', result);
-    }
-    return result;
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { error: 'Failed to send email' };
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, phone, password, accountType = 'PUBLIC' } = body;
+    const ipAddress = getClientIp(request);
+    const rateLimit = checkRateLimit(
+      `auth:register:${ipAddress}`,
+      RATE_LIMIT_CONFIG.authRegister.limit,
+      RATE_LIMIT_CONFIG.authRegister.windowMs
+    );
 
-    // Validate required fields
-    if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      );
+    if (rateLimit.limited) {
+      return jsonError(request, 'Too many registration attempts. Please try again later.', 429, {
+        retryAfterSeconds: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+      });
     }
 
-    // Sanitize and validate inputs
-    const sanitizedName = sanitizeString(name, 100);
-    const sanitizedEmail = sanitizeEmail(email);
-    const sanitizedPhone = phone ? sanitizePhone(phone) : null;
+    const parsedBody = registerSchema.safeParse(await request.json());
 
-    if (!sanitizedName || sanitizedName.length < 2) {
-      return NextResponse.json(
-        { error: 'Name must be at least 2 characters long' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid registration payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    if (!isValidEmail(sanitizedEmail)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address' },
-        { status: 400 }
-      );
-    }
+    const sanitizedName = sanitizeString(parsedBody.data.name, 100);
+    const sanitizedEmail = sanitizeEmail(parsedBody.data.email);
+    const sanitizedPhone = parsedBody.data.phone ? sanitizePhone(parsedBody.data.phone) : null;
 
-    // Validate password strength
-    const passwordValidation = validatePassword(password);
+    const passwordValidation = validatePassword(parsedBody.data.password);
     if (!passwordValidation.valid) {
-      return NextResponse.json(
-        { error: passwordValidation.errors.join('. ') },
-        { status: 400 }
-      );
+      return jsonError(request, passwordValidation.errors.join(' '), 400);
     }
 
-    // Check if user already exists
     const existingUser = await db.user.findUnique({
       where: { email: sanitizedEmail },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists' },
-        { status: 400 }
-      );
+      return jsonError(request, 'An account with this email already exists.', 409);
     }
 
-    // Hash password
-    const hashedPassword = hashPasswordForStorage(password);
-
-    // Generate verification code
     const verificationCode = generateVerificationCode();
-    const verificationCodeExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    const verificationCodeExpiry = getVerificationCodeExpiry();
+    const hashedPassword = hashPasswordForStorage(parsedBody.data.password);
 
-    // Determine if this is the main admin
     const isMainAdmin = sanitizedEmail.toLowerCase() === MAIN_ADMIN_EMAIL.toLowerCase();
 
-    // Determine role and approval status
     let role: UserRole = 'DRIVER';
     let isApproved = true;
     let securityLevel: SecurityLevel | null = null;
@@ -108,37 +72,26 @@ export async function POST(request: NextRequest) {
     let hasPaidAccess = false;
     let accessPermissions = 'charging_map';
 
-    const allPermissions = 'charging_map,battery_toolkit,analytics,user_management,fleet_management';
-    const fleetPermissions = 'charging_map,fleet_management';
-
     if (isMainAdmin) {
-      // Main admin ALWAYS gets full privileges
       role = 'ADMIN';
       isApproved = true;
       securityLevel = 'SUPERVISOR';
       subscriptionPlan = 'ENTERPRISE';
       hasPaidAccess = true;
-      accessPermissions = allPermissions;
-      console.log(`👑 Main admin registration: ${sanitizedEmail}`);
-    } else if (accountType === 'EMPLOYEE') {
+      accessPermissions = 'charging_map,battery_toolkit,analytics,user_management,fleet_management';
+    } else if (parsedBody.data.accountType === 'EMPLOYEE') {
       role = 'EMPLOYEE';
       isApproved = false;
       securityLevel = 'BASIC';
-    } else if (accountType === 'FLEET') {
+    } else if (parsedBody.data.accountType === 'FLEET') {
       role = 'FLEET_MANAGER';
-      isApproved = true;
       subscriptionPlan = 'ENTERPRISE';
       hasPaidAccess = true;
-      accessPermissions = fleetPermissions;
-    } else {
-      // Public users get DRIVER role
-      role = 'DRIVER';
-      isApproved = true;
+      accessPermissions = 'charging_map,fleet_management';
     }
 
-    // Create user in transaction
-    const user = await db.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
+    const user = await db.$transaction(async (transaction) => {
+      const createdUser = await transaction.user.create({
         data: {
           email: sanitizedEmail,
           name: sanitizedName,
@@ -150,72 +103,71 @@ export async function POST(request: NextRequest) {
           isEmailVerified: false,
           isApproved,
           securityLevel,
-          requestedRole: accountType === 'EMPLOYEE' ? 'EMPLOYEE' : null,
+          requestedRole: parsedBody.data.accountType === 'EMPLOYEE' ? 'EMPLOYEE' : null,
           subscriptionPlan,
           hasPaidAccess,
           accessPermissions,
         },
       });
 
-      // Create fleet record for FLEET_MANAGER
       if (role === 'FLEET_MANAGER') {
-        await tx.fleet.create({
+        await transaction.fleet.create({
           data: {
             name: `${sanitizedName}'s Fleet`,
             description: `Fleet managed by ${sanitizedName}`,
             category: 'PERSONAL',
-            ownerId: newUser.id,
+            ownerId: createdUser.id,
             contactEmail: sanitizedEmail,
             contactPhone: sanitizedPhone,
           },
         });
-        console.log(`🚗 Fleet created for: ${sanitizedEmail}`);
       }
 
-      return newUser;
+      return createdUser;
     });
 
-    // Send appropriate emails
-    if (isMainAdmin) {
-      await sendEmail('verification', user.email, {
-        code: verificationCode,
-        name: user.name || 'User',
-      });
-      console.log(`👑 Main admin registered: ${sanitizedEmail}`);
-    } else if (accountType === 'EMPLOYEE') {
-      // Notify employee of pending status
-      await sendEmail('employee_pending', user.email, { name: user.name || 'User' });
-      
-      // Notify admin of new employee registration
-      await sendEmail('new_employee_notification', MAIN_ADMIN_EMAIL, {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-      });
-      console.log(`📋 Employee pending approval: ${sanitizedEmail}`);
+    if (parsedBody.data.accountType === 'EMPLOYEE') {
+      await Promise.all([
+        enqueueEmailJob({
+          type: 'employee_pending',
+          to: user.email,
+          data: { name: user.name || 'User' },
+        }),
+        enqueueEmailJob({
+          type: 'new_employee_notification',
+          to: MAIN_ADMIN_EMAIL,
+          data: {
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+          },
+        }),
+      ]);
     } else {
-      // Send verification email to regular users
-      await sendEmail('verification', user.email, {
-        code: verificationCode,
-        name: user.name || 'User',
+      await enqueueEmailJob({
+        type: 'verification',
+        to: user.email,
+        data: {
+          code: verificationCode,
+          name: user.name || 'User',
+        },
       });
     }
 
-    return NextResponse.json({
+    logger.info('User registered', { userId: user.id, email: user.email, role: user.role });
+
+    return jsonSuccess(request, {
       success: true,
-      message: accountType === 'EMPLOYEE'
-        ? 'Account created! Your employee account is pending admin approval.'
-        : 'Account created! Please check your email for the verification code.',
+      message:
+        parsedBody.data.accountType === 'EMPLOYEE'
+          ? 'Account created. Your employee registration is pending approval.'
+          : 'Account created. Please check your email for the verification code.',
       userId: user.id,
       email: user.email,
-      isApproved: user.isApproved,
       role: user.role,
+      isApproved: user.isApproved,
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create account. Please try again.' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/auth/register' });
   }
 }

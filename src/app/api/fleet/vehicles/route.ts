@@ -1,162 +1,220 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireFleetAccess } from '@/lib/access-control';
+import { createFleetVehicleSchema, updateFleetVehicleSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-// GET - List vehicles for a fleet
+function canManageFleet(role: string, ownerId: string, userId: string) {
+  return role === 'ADMIN' || role === 'EMPLOYEE' || ownerId === userId;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const fleetId = searchParams.get('fleetId');
-    const userId = searchParams.get('userId');
-    const role = searchParams.get('role');
-    
+    const session = await requireFleetAccess(request);
+    const fleetId = new URL(request.url).searchParams.get('fleetId');
+
     if (!fleetId) {
-      return NextResponse.json({ error: 'Fleet ID is required' }, { status: 400 });
+      return jsonError(request, 'Fleet ID is required.', 400);
     }
-    
-    // Verify access
-    if (role !== 'ADMIN' && role !== 'EMPLOYEE') {
-      // Fleet manager can only see their own fleet's vehicles
-      const fleet = await db.fleet.findFirst({
-        where: { id: fleetId, ownerId: userId || undefined }
-      });
-      if (!fleet) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+
+    const fleet = await db.fleet.findUnique({
+      where: { id: fleetId },
+      select: { ownerId: true },
+    });
+
+    if (!fleet) {
+      return jsonError(request, 'Fleet not found.', 404);
     }
-    
+
+    if (!canManageFleet(session.user.role, fleet.ownerId, session.user.id)) {
+      return jsonError(request, 'You do not have access to this fleet.', 403);
+    }
+
     const vehicles = await db.fleetVehicle.findMany({
       where: { fleetId },
       include: {
         _count: {
-          select: { chargingSessions: true }
-        }
+          select: { chargingSessions: true },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
-    
-    return NextResponse.json({ vehicles });
+
+    return jsonSuccess(request, {
+      success: true,
+      vehicles,
+    });
   } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    return NextResponse.json({ error: 'Failed to fetch vehicles' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet/vehicles' });
   }
 }
 
-// POST - Add a vehicle to fleet
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { fleetId, plateNumber, make, model, year, vin, color, batteryCapacity, maxRange, assignedDriver } = body;
-    
-    if (!fleetId || !plateNumber) {
-      return NextResponse.json({ error: 'Fleet ID and plate number are required' }, { status: 400 });
+    const session = await requireFleetAccess(request);
+    const parsedBody = createFleetVehicleSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid vehicle payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
-    
-    // Check if plate number already exists
-    const existing = await db.fleetVehicle.findUnique({
-      where: { fleetId_plateNumber: { fleetId, plateNumber } }
+
+    const fleet = await db.fleet.findUnique({
+      where: { id: parsedBody.data.fleetId },
+      select: { ownerId: true },
     });
-    
-    if (existing) {
-      return NextResponse.json({ error: 'Vehicle with this plate number already exists in fleet' }, { status: 400 });
+
+    if (!fleet) {
+      return jsonError(request, 'Fleet not found.', 404);
     }
-    
-    const vehicle = await db.fleetVehicle.create({
-      data: {
-        fleetId,
-        plateNumber: plateNumber.toUpperCase(),
-        make,
-        model,
-        year,
-        vin,
-        color,
-        batteryCapacity,
-        maxRange,
-        assignedDriver,
-        status: 'ACTIVE'
-      }
+
+    if (!canManageFleet(session.user.role, fleet.ownerId, session.user.id)) {
+      return jsonError(request, 'You do not have access to this fleet.', 403);
+    }
+
+    const existingVehicle = await db.fleetVehicle.findUnique({
+      where: {
+        fleetId_plateNumber: {
+          fleetId: parsedBody.data.fleetId,
+          plateNumber: parsedBody.data.plateNumber.toUpperCase(),
+        },
+      },
     });
-    
-    // Update fleet total vehicles count
-    await db.fleet.update({
-      where: { id: fleetId },
-      data: { totalVehicles: { increment: 1 } }
+
+    if (existingVehicle) {
+      return jsonError(request, 'Vehicle with this plate number already exists in the fleet.', 409);
+    }
+
+    const vehicle = await db.$transaction(async (transaction) => {
+      const createdVehicle = await transaction.fleetVehicle.create({
+        data: {
+          ...parsedBody.data,
+          plateNumber: parsedBody.data.plateNumber.toUpperCase(),
+          status: 'ACTIVE',
+        },
+      });
+
+      await transaction.fleet.update({
+        where: { id: parsedBody.data.fleetId },
+        data: { totalVehicles: { increment: 1 } },
+      });
+
+      return createdVehicle;
     });
-    
-    console.log(`🚗 Vehicle added: ${plateNumber} to fleet ${fleetId}`);
-    
-    return NextResponse.json({ success: true, vehicle });
+
+    logger.info('Fleet vehicle created', { actorUserId: session.user.id, vehicleId: vehicle.id });
+
+    return jsonSuccess(
+      request,
+      {
+        success: true,
+        vehicle,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Error adding vehicle:', error);
-    return NextResponse.json({ error: 'Failed to add vehicle' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet/vehicles' });
   }
 }
 
-// PUT - Update vehicle
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { vehicleId, make, model, year, vin, color, batteryCapacity, maxRange, status, assignedDriver, currentBatteryLevel } = body;
-    
-    if (!vehicleId) {
-      return NextResponse.json({ error: 'Vehicle ID is required' }, { status: 400 });
+    const session = await requireFleetAccess(request);
+    const parsedBody = updateFleetVehicleSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid vehicle update payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
-    
-    const vehicle = await db.fleetVehicle.update({
-      where: { id: vehicleId },
-      data: {
-        make,
-        model,
-        year,
-        vin,
-        color,
-        batteryCapacity,
-        maxRange,
-        status,
-        assignedDriver,
-        currentBatteryLevel
-      }
+
+    const existingVehicle = await db.fleetVehicle.findUnique({
+      where: { id: parsedBody.data.vehicleId },
+      include: {
+        fleet: {
+          select: { ownerId: true },
+        },
+      },
     });
-    
-    return NextResponse.json({ success: true, vehicle });
+
+    if (!existingVehicle) {
+      return jsonError(request, 'Vehicle not found.', 404);
+    }
+
+    if (!canManageFleet(session.user.role, existingVehicle.fleet.ownerId, session.user.id)) {
+      return jsonError(request, 'You do not have access to this fleet.', 403);
+    }
+
+    const vehicle = await db.fleetVehicle.update({
+      where: { id: parsedBody.data.vehicleId },
+      data: {
+        make: parsedBody.data.make,
+        model: parsedBody.data.model,
+        year: parsedBody.data.year,
+        vin: parsedBody.data.vin,
+        color: parsedBody.data.color,
+        batteryCapacity: parsedBody.data.batteryCapacity,
+        maxRange: parsedBody.data.maxRange,
+        status: parsedBody.data.status,
+        assignedDriver: parsedBody.data.assignedDriver,
+        currentBatteryLevel: parsedBody.data.currentBatteryLevel,
+      },
+    });
+
+    return jsonSuccess(request, {
+      success: true,
+      vehicle,
+    });
   } catch (error) {
-    console.error('Error updating vehicle:', error);
-    return NextResponse.json({ error: 'Failed to update vehicle' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet/vehicles' });
   }
 }
 
-// DELETE - Remove vehicle from fleet
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const vehicleId = searchParams.get('vehicleId');
-    
+    const session = await requireFleetAccess(request);
+    const vehicleId = new URL(request.url).searchParams.get('vehicleId');
+
     if (!vehicleId) {
-      return NextResponse.json({ error: 'Vehicle ID is required' }, { status: 400 });
+      return jsonError(request, 'Vehicle ID is required.', 400);
     }
-    
-    // Get the fleet ID before deleting
+
     const vehicle = await db.fleetVehicle.findUnique({
       where: { id: vehicleId },
-      select: { fleetId: true }
+      include: {
+        fleet: {
+          select: { ownerId: true },
+        },
+      },
     });
-    
+
     if (!vehicle) {
-      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
+      return jsonError(request, 'Vehicle not found.', 404);
     }
-    
-    await db.fleetVehicle.delete({
-      where: { id: vehicleId }
+
+    if (!canManageFleet(session.user.role, vehicle.fleet.ownerId, session.user.id)) {
+      return jsonError(request, 'You do not have access to this fleet.', 403);
+    }
+
+    await db.$transaction(async (transaction) => {
+      await transaction.fleetVehicle.delete({
+        where: { id: vehicleId },
+      });
+
+      await transaction.fleet.update({
+        where: { id: vehicle.fleetId },
+        data: { totalVehicles: { decrement: 1 } },
+      });
     });
-    
-    // Update fleet total vehicles count
-    await db.fleet.update({
-      where: { id: vehicle.fleetId },
-      data: { totalVehicles: { decrement: 1 } }
+
+    logger.info('Fleet vehicle deleted', { actorUserId: session.user.id, vehicleId });
+
+    return jsonSuccess(request, {
+      success: true,
     });
-    
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting vehicle:', error);
-    return NextResponse.json({ error: 'Failed to delete vehicle' }, { status: 500 });
+    return handleRouteError(request, error, { route: '/api/fleet/vehicles' });
   }
 }

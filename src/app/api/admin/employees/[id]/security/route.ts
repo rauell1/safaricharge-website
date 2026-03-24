@@ -1,54 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { securityLevelSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
-// PATCH - Update employee security level
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const adminSession = await requireAdminUser(request);
     const { id } = await params;
-    const body = await request.json();
-    const { securityLevel } = body;
+    const parsedBody = securityLevelSchema.safeParse(await request.json());
 
-    if (!securityLevel) {
-      return NextResponse.json(
-        { error: 'Security level is required' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid security level payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    const validLevels = ['BASIC', 'STANDARD', 'ELEVATED', 'MANAGER', 'SUPERVISOR'];
-    if (!validLevels.includes(securityLevel)) {
-      return NextResponse.json(
-        { error: 'Invalid security level' },
-        { status: 400 }
-      );
-    }
-
-    // Check if employee exists
-    const employee = await db.user.findUnique({
-      where: { id },
-    });
+    const employee = await db.user.findUnique({ where: { id } });
 
     if (!employee) {
-      return NextResponse.json(
-        { error: 'Employee not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'Employee not found.', 404);
     }
 
-    // Update security level
+    if (employee.role !== 'EMPLOYEE') {
+      return jsonError(request, 'User is not an employee.', 400);
+    }
+
     const updatedEmployee = await db.user.update({
       where: { id },
-      data: { securityLevel },
+      data: { securityLevel: parsedBody.data.securityLevel },
     });
 
-    console.log(`\n🔒 Security level updated for ${employee.email}: ${securityLevel}\n`);
+    logger.info('Employee security level updated', {
+      actorUserId: adminSession.user.id,
+      employeeId: updatedEmployee.id,
+      securityLevel: updatedEmployee.securityLevel,
+    });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'Security level updated',
+      message: 'Security level updated.',
       employee: {
         id: updatedEmployee.id,
         email: updatedEmployee.email,
@@ -56,10 +51,6 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    console.error('Error updating security level:', error);
-    return NextResponse.json(
-      { error: 'Failed to update security level' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/employees/[id]/security' });
   }
 }

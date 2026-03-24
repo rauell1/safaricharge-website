@@ -45,6 +45,17 @@ enum SessionStatus {
   CANCELLED
 }
 
+enum JobType {
+  SEND_EMAIL
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -87,6 +98,12 @@ model User {
   
   sessions     ChargingSession[]
   notifications Notification[]
+  authSessions Session[]
+
+  @@index([role])
+  @@index([isApproved])
+  @@index([isBlocked])
+  @@index([createdAt])
 }
 
 model ChargingStation {
@@ -108,6 +125,9 @@ model ChargingStation {
   
   connectors  Connector[]
   sessions    ChargingSession[]
+
+  @@index([city, status])
+  @@index([createdAt])
 }
 
 model Connector {
@@ -119,6 +139,9 @@ model Connector {
   status         StationStatus @default(AVAILABLE)
   station        ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
   sessions       ChargingSession[]
+
+  @@index([stationId, status])
+  @@index([type, status])
 }
 
 model ChargingSession {
@@ -131,9 +154,14 @@ model ChargingSession {
   endTime      DateTime?
   energyDelivered Float?     // kWh
   cost         Float?        // total cost
-  user         User          @relation(fields: [userId], references: [id])
-  station      ChargingStation @relation(fields: [stationId], references: [id])
-  connector    Connector     @relation(fields: [connectorId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station      ChargingStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  connector    Connector     @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startTime])
+  @@index([stationId, status])
+  @@index([connectorId, status])
+  @@index([status, startTime])
 }
 
 model Notification {
@@ -145,6 +173,8 @@ model Notification {
   type        String   // "info", "warning", "success"
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
 }
 
 model AnalyticsData {
@@ -154,6 +184,8 @@ model AnalyticsData {
   value       Float
   timestamp   DateTime @default(now())
   metadata    String?  // JSON for additional data
+
+  @@index([stationId, metricType, timestamp])
 }
 
 // Fleet Management Models
@@ -203,6 +235,10 @@ model Fleet {
   
   vehicles     FleetVehicle[]
   chargingSessions FleetChargingSession[]
+
+  @@index([ownerId])
+  @@index([category])
+  @@index([createdAt])
 }
 
 model FleetVehicle {
@@ -238,6 +274,8 @@ model FleetVehicle {
   chargingSessions FleetChargingSession[]
   
   @@unique([fleetId, plateNumber])
+  @@index([fleetId, status])
+  @@index([plateNumber])
 }
 
 model FleetChargingSession {
@@ -264,4 +302,41 @@ model FleetChargingSession {
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([fleetId, startTime])
+  @@index([vehicleId, startTime])
+  @@index([createdAt])
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String
+  tokenHash      String   @unique
+  ipAddress      String?
+  userAgent      String?
+  expiresAt      DateTime
+  lastAccessedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  type        JobType
+  status      JobStatus @default(PENDING)
+  payload     String
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  scheduledFor DateTime @default(now())
+  lockedAt    DateTime?
+  processedAt DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([createdAt])
 }

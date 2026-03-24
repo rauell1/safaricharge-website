@@ -1,127 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { formatUserResponse, generateVerificationCode, verifyPassword } from '@/lib/auth';
+import { RATE_LIMIT_CONFIG } from '@/lib/config';
 import { db } from '@/lib/db';
-import { verifyPassword, generateVerificationCode, formatUserResponse } from '@/lib/auth';
-import { isValidEmail, sanitizeEmail, MAIN_ADMIN_EMAIL } from '@/lib/security';
-
-// Helper function to send email
-async function sendEmail(type: string, to: string | string[], data: Record<string, unknown>) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-      
-    const response = await fetch(`${baseUrl}/api/email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, to, data }),
-    });
-    
-    const result = await response.json();
-    if (!response.ok) {
-      console.error('Email send failed:', result);
-    }
-    return result;
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { error: 'Failed to send email' };
-  }
-}
+import { enqueueEmailJob } from '@/lib/jobs';
+import { ApiError, getClientIp, handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { attachSessionCookie, createSessionForUser } from '@/lib/session';
+import { checkRateLimit, clearRateLimit, getVerificationCodeExpiry, sanitizeEmail } from '@/lib/security';
+import { loginSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const ipAddress = getClientIp(request);
+    const rateLimit = checkRateLimit(
+      `auth:login:${ipAddress}`,
+      RATE_LIMIT_CONFIG.authLogin.limit,
+      RATE_LIMIT_CONFIG.authLogin.windowMs
+    );
 
-    // Validate required fields
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+    if (rateLimit.limited) {
+      return jsonError(request, 'Too many login attempts. Please try again later.', 429, {
+        retryAfterSeconds: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+      });
     }
 
-    // Validate and sanitize email
-    const sanitizedEmail = sanitizeEmail(email);
-    if (!isValidEmail(sanitizedEmail)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+    const parsedBody = loginSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid login payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Find user
+    const sanitizedEmail = sanitizeEmail(parsedBody.data.email);
     const user = await db.user.findUnique({
       where: { email: sanitizedEmail },
     });
 
-    // Use generic error message to prevent email enumeration
-    const invalidCredentialsError = { error: 'Invalid email or password', status: 401 };
-
-    if (!user) {
-      return NextResponse.json(
-        { error: invalidCredentialsError.error },
-        { status: invalidCredentialsError.status }
-      );
+    if (!user || !user.password || !verifyPassword(parsedBody.data.password, user.password)) {
+      return jsonError(request, 'Invalid email or password.', 401);
     }
 
-    // Verify password
-    if (!user.password || !verifyPassword(password, user.password)) {
-      return NextResponse.json(
-        { error: invalidCredentialsError.error },
-        { status: invalidCredentialsError.status }
-      );
-    }
-
-    // Check if user is blocked
     if (user.isBlocked) {
-      return NextResponse.json(
-        { 
-          error: `Your account has been blocked. ${user.blockReason ? `Reason: ${user.blockReason}` : ''} Contact support for assistance.`,
-          isBlocked: true 
-        },
-        { status: 403 }
-      );
+      throw new ApiError(403, 'Your account has been blocked. Contact support for assistance.');
     }
 
-    // Check if employee account is approved
     if (user.role === 'EMPLOYEE' && !user.isApproved) {
-      return NextResponse.json(
-        { 
-          error: 'Your employee account is pending approval. You will be notified once approved.',
-          pendingApproval: true 
-        },
-        { status: 403 }
-      );
+      throw new ApiError(403, 'Your employee account is pending approval.');
     }
 
-    // If user has verified email, skip 2FA
     if (user.isEmailVerified) {
-      console.log(`✅ User logged in: ${sanitizedEmail}`);
-      
-      // Ensure ADMIN always has premium rights
-      if (user.role === 'ADMIN') {
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            subscriptionPlan: 'ENTERPRISE',
-            hasPaidAccess: true,
-            accessPermissions: 'charging_map,battery_toolkit,analytics,user_management,fleet_management',
-          },
-        });
-      }
-      
-      return NextResponse.json({
+      clearRateLimit(`auth:login:${ipAddress}`);
+
+      const session = await createSessionForUser(user.id, request);
+      const response = jsonSuccess(request, {
         success: true,
-        message: 'Login successful',
-        skipVerification: true,
+        message: 'Login successful.',
         user: formatUserResponse(user),
       });
+
+      attachSessionCookie(response, session.token, session.expiresAt);
+      logger.info('User logged in', { userId: user.id, email: user.email, ipAddress });
+      return response;
     }
 
-    // Generate verification code for 2FA
     const verificationCode = generateVerificationCode();
-    const verificationCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const verificationCodeExpiry = getVerificationCodeExpiry();
 
-    // Update user with verification code
     await db.user.update({
       where: { id: user.id },
       data: {
@@ -130,26 +75,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send verification email
-    await sendEmail('verification', user.email, {
-      code: verificationCode,
-      name: user.name || 'User',
+    await enqueueEmailJob({
+      type: 'verification',
+      to: user.email,
+      data: {
+        code: verificationCode,
+        name: user.name || 'User',
+      },
     });
 
-    console.log(`📧 2FA code sent to: ${sanitizedEmail}`);
+    logger.info('Verification code queued for login', { userId: user.id, email: user.email });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'Verification code sent to your email',
+      message: 'Verification code sent to your email.',
       userId: user.id,
       email: user.email,
       requiresVerification: true,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred. Please try again.' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/auth/login' });
   }
 }

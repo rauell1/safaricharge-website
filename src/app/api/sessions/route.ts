@@ -1,94 +1,110 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireUser } from '@/lib/access-control';
+import { completeSessionSchema, createSessionSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
+import { createPaginationMeta, handleRouteError, jsonError, jsonSuccess, parsePagination } from '@/lib/api';
 
-// GET - Fetch charging sessions
+function canViewAnySessions(role: string) {
+  return role === 'ADMIN' || role === 'EMPLOYEE';
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireUser(request);
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const stationId = searchParams.get('stationId');
     const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    const where: any = {};
-    
-    if (userId) {
-      where.userId = userId;
-    }
-    
-    if (stationId) {
-      where.stationId = stationId;
-    }
-    
-    if (status) {
-      where.status = status;
-    }
+    const where = {
+      ...(canViewAnySessions(session.user.role) ? {} : { userId: session.user.id }),
+      ...(stationId ? { stationId } : {}),
+      ...(status ? { status: status as never } : {}),
+    };
 
-    const sessions = await db.chargingSession.findMany({
-      where,
-      include: {
-        station: {
-          include: {
-            connectors: true,
+    const [sessions, total] = await Promise.all([
+      db.chargingSession.findMany({
+        where,
+        include: {
+          station: {
+            include: {
+              connectors: true,
+            },
+          },
+          connector: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-        connector: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+        orderBy: {
+          startTime: 'desc',
         },
-      },
-      orderBy: {
-        startTime: 'desc',
-      },
-      take: limit,
+        skip,
+        take,
+      }),
+      db.chargingSession.count({ where }),
+    ]);
+
+    return jsonSuccess(request, {
+      success: true,
+      sessions,
+      pagination: createPaginationMeta(total, page, pageSize),
     });
-
-    return NextResponse.json(sessions);
   } catch (error) {
-    console.error('Error fetching sessions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch sessions' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/sessions' });
   }
 }
 
-// POST - Create a new charging session
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, stationId, connectorId } = body;
+    const session = await requireUser(request);
+    const parsedBody = createSessionSchema.safeParse(await request.json());
 
-    // Check if connector is available
-    const connector = await db.connector.findUnique({
-      where: { id: connectorId },
-    });
-
-    if (!connector || connector.status !== 'AVAILABLE') {
-      return NextResponse.json(
-        { error: 'Connector not available' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid session payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Start session and update connector status in a transaction
-    const session = await db.$transaction(async (tx) => {
-      // Update connector status
-      await tx.connector.update({
-        where: { id: connectorId },
+    const [connector, existingActiveSession] = await Promise.all([
+      db.connector.findUnique({
+        where: { id: parsedBody.data.connectorId },
+      }),
+      db.chargingSession.findFirst({
+        where: {
+          userId: session.user.id,
+          status: 'ACTIVE',
+        },
+      }),
+    ]);
+
+    if (!connector || connector.stationId !== parsedBody.data.stationId) {
+      return jsonError(request, 'Connector not found for the selected station.', 404);
+    }
+
+    if (connector.status !== 'AVAILABLE') {
+      return jsonError(request, 'Connector is not currently available.', 409);
+    }
+
+    if (existingActiveSession) {
+      return jsonError(request, 'You already have an active charging session.', 409);
+    }
+
+    const createdSession = await db.$transaction(async (transaction) => {
+      await transaction.connector.update({
+        where: { id: parsedBody.data.connectorId },
         data: { status: 'OCCUPIED' },
       });
 
-      // Create session
-      return tx.chargingSession.create({
+      return transaction.chargingSession.create({
         data: {
-          userId,
-          stationId,
-          connectorId,
+          userId: session.user.id,
+          stationId: parsedBody.data.stationId,
+          connectorId: parsedBody.data.connectorId,
           status: 'ACTIVE',
         },
         include: {
@@ -98,50 +114,65 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    return NextResponse.json(session, { status: 201 });
-  } catch (error) {
-    console.error('Error creating session:', error);
-    return NextResponse.json(
-      { error: 'Failed to create session' },
-      { status: 500 }
+    return jsonSuccess(
+      request,
+      {
+        success: true,
+        session: createdSession,
+      },
+      { status: 201 }
     );
+  } catch (error) {
+    return handleRouteError(request, error, { route: '/api/sessions' });
   }
 }
 
-// PATCH - Update a charging session (end session)
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { sessionId, energyDelivered, cost } = body;
+    const authenticatedUser = await requireUser(request);
+    const parsedBody = completeSessionSchema.safeParse(await request.json());
 
-    const session = await db.chargingSession.findUnique({
-      where: { id: sessionId },
-      include: { connector: true },
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Session not found' },
-        { status: 404 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid session update payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // End session and update connector status in a transaction
-    const updatedSession = await db.$transaction(async (tx) => {
-      // Update connector status back to available
-      await tx.connector.update({
-        where: { id: session.connectorId },
+    const existingSession = await db.chargingSession.findUnique({
+      where: { id: parsedBody.data.sessionId },
+      include: {
+        connector: true,
+      },
+    });
+
+    if (!existingSession) {
+      return jsonError(request, 'Charging session not found.', 404);
+    }
+
+    const canManageSession =
+      canViewAnySessions(authenticatedUser.user.role) || existingSession.userId === authenticatedUser.user.id;
+
+    if (!canManageSession) {
+      return jsonError(request, 'You do not have permission to update this session.', 403);
+    }
+
+    if (existingSession.status !== 'ACTIVE') {
+      return jsonError(request, 'Only active sessions can be completed.', 400);
+    }
+
+    const updatedSession = await db.$transaction(async (transaction) => {
+      await transaction.connector.update({
+        where: { id: existingSession.connectorId },
         data: { status: 'AVAILABLE' },
       });
 
-      // End session
-      return tx.chargingSession.update({
-        where: { id: sessionId },
+      return transaction.chargingSession.update({
+        where: { id: parsedBody.data.sessionId },
         data: {
           status: 'COMPLETED',
           endTime: new Date(),
-          energyDelivered,
-          cost,
+          energyDelivered: parsedBody.data.energyDelivered,
+          cost: parsedBody.data.cost,
         },
         include: {
           station: true,
@@ -150,12 +181,11 @@ export async function PATCH(request: NextRequest) {
       });
     });
 
-    return NextResponse.json(updatedSession);
+    return jsonSuccess(request, {
+      success: true,
+      session: updatedSession,
+    });
   } catch (error) {
-    console.error('Error updating session:', error);
-    return NextResponse.json(
-      { error: 'Failed to update session' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/sessions' });
   }
 }

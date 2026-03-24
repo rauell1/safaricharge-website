@@ -1,54 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-// POST - Reject/delete an employee application
+const rejectEmployeeSchema = z.object({
+  employeeId: z.string().trim().min(1),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { employeeId } = body;
+    const adminSession = await requireAdminUser(request);
+    const parsedBody = rejectEmployeeSchema.safeParse(await request.json());
 
-    if (!employeeId) {
-      return NextResponse.json(
-        { error: 'Employee ID is required' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid rejection payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Check if employee exists and is pending
     const employee = await db.user.findUnique({
-      where: { id: employeeId },
+      where: { id: parsedBody.data.employeeId },
     });
 
     if (!employee) {
-      return NextResponse.json(
-        { error: 'Employee not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'Employee not found.', 404);
     }
 
     if (employee.role !== 'EMPLOYEE') {
-      return NextResponse.json(
-        { error: 'User is not an employee' },
-        { status: 400 }
-      );
+      return jsonError(request, 'User is not an employee.', 400);
     }
 
-    // Delete the employee (reject their application)
+    if (employee.isApproved) {
+      return jsonError(request, 'Approved employees cannot be rejected through this endpoint.', 400);
+    }
+
     await db.user.delete({
-      where: { id: employeeId },
+      where: { id: parsedBody.data.employeeId },
     });
 
-    console.log(`\n❌ Employee application rejected: ${employee.email}\n`);
+    logger.info('Employee application rejected', {
+      actorUserId: adminSession.user.id,
+      employeeId: employee.id,
+    });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'Employee application rejected',
+      message: 'Employee application rejected.',
     });
   } catch (error) {
-    console.error('Error rejecting employee:', error);
-    return NextResponse.json(
-      { error: 'Failed to reject employee' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/employees/reject' });
   }
 }

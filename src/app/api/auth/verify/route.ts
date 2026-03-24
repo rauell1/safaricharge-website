@@ -1,70 +1,64 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest } from 'next/server';
 import { formatUserResponse } from '@/lib/auth';
+import { RATE_LIMIT_CONFIG } from '@/lib/config';
+import { db } from '@/lib/db';
+import { getClientIp, handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { attachSessionCookie, createSessionForUser } from '@/lib/session';
+import { checkRateLimit, sanitizeEmail } from '@/lib/security';
+import { verifyCodeSchema } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, code, userId } = body;
+    const ipAddress = getClientIp(request);
+    const rateLimit = checkRateLimit(
+      `auth:verify:${ipAddress}`,
+      RATE_LIMIT_CONFIG.authVerify.limit,
+      RATE_LIMIT_CONFIG.authVerify.windowMs
+    );
 
-    // Validate required fields
-    if (!code || (!email && !userId)) {
-      return NextResponse.json(
-        { error: 'Verification code and email/user ID are required' },
-        { status: 400 }
-      );
+    if (rateLimit.limited) {
+      return jsonError(request, 'Too many verification attempts. Please try again later.', 429, {
+        retryAfterSeconds: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+      });
     }
 
-    // Validate code format (6 digits)
-    if (!/^\d{6}$/.test(code)) {
-      return NextResponse.json(
-        { error: 'Invalid verification code format' },
-        { status: 400 }
-      );
+    const parsedBody = verifyCodeSchema.safeParse(await request.json());
+
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid verification payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Find user
+    const { code, userId } = parsedBody.data;
+    const email = parsedBody.data.email ? sanitizeEmail(parsedBody.data.email) : undefined;
+
     const user = await db.user.findFirst({
       where: {
         OR: [
-          { email: email?.toLowerCase() },
-          { id: userId },
+          ...(email ? [{ email }] : []),
+          ...(userId ? [{ id: userId }] : []),
         ],
       },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'User not found.', 404);
     }
 
-    // Check if account is blocked
     if (user.isBlocked) {
-      return NextResponse.json(
-        { error: 'Your account has been blocked. Contact support for assistance.' },
-        { status: 403 }
-      );
+      return jsonError(request, 'Your account has been blocked. Contact support for assistance.', 403);
     }
 
-    // Check if verification code is valid
     if (user.verificationCode !== code) {
-      return NextResponse.json(
-        { error: 'Invalid verification code' },
-        { status: 400 }
-      );
+      return jsonError(request, 'Invalid verification code.', 400);
     }
 
-    // Check if verification code has expired
     if (!user.verificationCodeExpiry || user.verificationCodeExpiry < new Date()) {
-      return NextResponse.json(
-        { error: 'Verification code has expired. Please request a new one.' },
-        { status: 400 }
-      );
+      return jsonError(request, 'Verification code has expired. Please request a new one.', 400);
     }
 
-    // Update user - mark email as verified and clear verification code
     const updatedUser = await db.user.update({
       where: { id: user.id },
       data: {
@@ -74,30 +68,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // If ADMIN, ensure premium rights
-    if (updatedUser.role === 'ADMIN') {
-      await db.user.update({
-        where: { id: updatedUser.id },
-        data: {
-          subscriptionPlan: 'ENTERPRISE',
-          hasPaidAccess: true,
-          accessPermissions: 'charging_map,battery_toolkit,analytics,user_management,fleet_management',
-        },
-      });
-    }
-
-    console.log(`✅ Email verified for: ${updatedUser.email}`);
-
-    return NextResponse.json({
+    const session = await createSessionForUser(updatedUser.id, request);
+    const response = jsonSuccess(request, {
       success: true,
-      message: 'Verification successful!',
+      message: 'Verification successful.',
       user: formatUserResponse(updatedUser),
     });
+
+    attachSessionCookie(response, session.token, session.expiresAt);
+    logger.info('User verified and session created', { userId: updatedUser.id, email: updatedUser.email });
+    return response;
   } catch (error) {
-    console.error('Verification error:', error);
-    return NextResponse.json(
-      { error: 'Failed to verify code. Please try again.' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/auth/verify' });
   }
 }

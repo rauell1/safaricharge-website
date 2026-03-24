@@ -122,11 +122,11 @@ export function AdminUserManagement() {
   const fetchUsers = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/users');
-      const data = await response.json();
+      const responseData = await response.json();
       
       if (response.ok) {
-        setUsers(data.users);
-        setStats(data.stats);
+        setUsers(responseData.users);
+        setStats(responseData.stats);
       } else {
         toast.error('Failed to fetch users');
       }
@@ -160,13 +160,13 @@ export function AdminUserManagement() {
         body: JSON.stringify({ role: newRole }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success(`Role updated to ${roleConfig[newRole]?.label || newRole}`);
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to update role');
+        toast.error(responseData.error || 'Failed to update role');
       }
     } catch (error) {
       console.error('Error updating role:', error);
@@ -187,7 +187,7 @@ export function AdminUserManagement() {
         body: JSON.stringify({ reason: blockReason }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('User blocked successfully');
@@ -195,7 +195,7 @@ export function AdminUserManagement() {
         setBlockReason('');
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to block user');
+        toast.error(responseData.error || 'Failed to block user');
       }
     } catch (error) {
       console.error('Error blocking user:', error);
@@ -212,13 +212,13 @@ export function AdminUserManagement() {
         method: 'POST',
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('User unblocked successfully');
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to unblock user');
+        toast.error(responseData.error || 'Failed to unblock user');
       }
     } catch (error) {
       console.error('Error unblocking user:', error);
@@ -233,18 +233,18 @@ export function AdminUserManagement() {
     
     setUpdating(selectedUser.id);
     try {
-      const response = await fetch(`/api/admin/users?userId=${selectedUser.id}`, {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
         method: 'DELETE',
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (response.ok) {
         toast.success('User and all associated data deleted');
         setIsDeleteDialogOpen(false);
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to delete user');
+        toast.error(responseData.error || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Error deleting user:', error);

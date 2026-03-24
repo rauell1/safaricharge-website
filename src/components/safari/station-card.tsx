@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChargingStation, StationStatus, ConnectorType } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -28,8 +28,6 @@ import {
   Accessibility,
   ChevronDown,
   Plug,
-  Upload,
-  Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/currency-context';
@@ -65,8 +63,6 @@ const amenityIcons: Record<string, React.ReactNode> = {
 
 export function StationCard({ station, isSelected, onClick, onNavigate }: StationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { formatPriceDual } = useCurrency();
   
   const availableConnectors = station.connectors.filter(c => c.status === 'AVAILABLE').length;
@@ -78,17 +74,6 @@ export function StationCard({ station, isSelected, onClick, onNavigate }: Statio
   
   // Format price in both USD and KES
   const prices = formatPriceDual(minPrice);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   return (
     <Card 
@@ -282,57 +267,6 @@ export function StationCard({ station, isSelected, onClick, onNavigate }: Statio
                     </div>
                   </div>
                 )}
-
-                {/* Image Upload Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <ImageIcon className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-semibold">Station Photo</span>
-                  </div>
-                  
-                  {uploadedImage ? (
-                    <div className="relative rounded-lg overflow-hidden group">
-                      <img
-                        src={uploadedImage}
-                        alt={station.name}
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            fileInputRef.current?.click();
-                          }}
-                        >
-                          <Upload className="w-3 h-3 mr-1" />
-                          Change Photo
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                      className="w-full h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-accent/50 transition-colors duration-300"
-                    >
-                      <Upload className="w-6 h-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Upload station photo</span>
-                    </button>
-                  )}
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
 
                 {/* Quick Stats */}
                 <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">

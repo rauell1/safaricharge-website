@@ -1,90 +1,73 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
-import { MAIN_ADMIN_EMAIL } from '@/lib/security';
+import { enqueueEmailJob } from '@/lib/jobs';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-// Helper function to send email
-async function sendEmail(type: string, to: string | string[], data: Record<string, unknown>) {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, to, data }),
-    });
-    
-    const result = await response.json();
-    if (!response.ok) {
-      console.error('Email send failed:', result);
-    }
-    return result;
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { error: 'Failed to send email' };
-  }
-}
+const approveEmployeeSchema = z.object({
+  employeeId: z.string().trim().min(1),
+  securityLevel: z.enum(['BASIC', 'STANDARD', 'ELEVATED', 'MANAGER', 'SUPERVISOR']).default('BASIC'),
+});
 
-// POST - Approve an employee
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { employeeId, securityLevel, approvedBy } = body;
+    const adminSession = await requireAdminUser(request);
+    const parsedBody = approveEmployeeSchema.safeParse(await request.json());
 
-    if (!employeeId) {
-      return NextResponse.json(
-        { error: 'Employee ID is required' },
-        { status: 400 }
-      );
+    if (!parsedBody.success) {
+      return jsonError(request, 'Invalid approval payload.', 400, {
+        issues: parsedBody.error.flatten(),
+      });
     }
 
-    // Check if employee exists and is pending
     const employee = await db.user.findUnique({
-      where: { id: employeeId },
+      where: { id: parsedBody.data.employeeId },
     });
 
     if (!employee) {
-      return NextResponse.json(
-        { error: 'Employee not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'Employee not found.', 404);
     }
 
     if (employee.role !== 'EMPLOYEE') {
-      return NextResponse.json(
-        { error: 'User is not an employee' },
-        { status: 400 }
-      );
+      return jsonError(request, 'User is not an employee.', 400);
     }
 
     if (employee.isApproved) {
-      return NextResponse.json(
-        { error: 'Employee is already approved' },
-        { status: 400 }
-      );
+      return jsonError(request, 'Employee is already approved.', 400);
     }
 
-    const assignedSecurityLevel = securityLevel || 'BASIC';
-
-    // Update employee with approval
     const updatedEmployee = await db.user.update({
-      where: { id: employeeId },
+      where: { id: parsedBody.data.employeeId },
       data: {
         isApproved: true,
-        securityLevel: assignedSecurityLevel,
-        approvedBy: approvedBy,
+        securityLevel: parsedBody.data.securityLevel,
+        approvedBy: adminSession.user.id,
         approvedAt: new Date(),
+        hasPaidAccess: true,
+        accessPermissions: 'charging_map,battery_toolkit,analytics,fleet_management',
       },
     });
 
-    // Send approval email to employee
-    await sendEmail('employee_approved', employee.email, {
-      name: employee.name,
-      securityLevel: assignedSecurityLevel,
+    await enqueueEmailJob({
+      type: 'employee_approved',
+      to: updatedEmployee.email,
+      data: {
+        name: updatedEmployee.name,
+        securityLevel: updatedEmployee.securityLevel,
+      },
     });
 
-    console.log(`\n✅ Employee approved: ${employee.email} (Security Level: ${assignedSecurityLevel})\n`);
+    logger.info('Employee approved', {
+      actorUserId: adminSession.user.id,
+      employeeId: updatedEmployee.id,
+      securityLevel: updatedEmployee.securityLevel,
+    });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'Employee approved successfully. Approval email sent.',
+      message: 'Employee approved successfully.',
       employee: {
         id: updatedEmployee.id,
         email: updatedEmployee.email,
@@ -94,10 +77,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error approving employee:', error);
-    return NextResponse.json(
-      { error: 'Failed to approve employee' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/employees/approve' });
   }
 }

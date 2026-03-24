@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import path from 'path'
+import '@/lib/env'
 
 // Prisma's SQLite query engine resolves relative paths from the binary
 // location rather than the process working directory. Convert relative

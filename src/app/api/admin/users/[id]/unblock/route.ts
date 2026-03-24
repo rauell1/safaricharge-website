@@ -1,34 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
-// POST - Unblock a user (rollback block)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const adminSession = await requireAdminUser(request);
     const { id } = await params;
 
-    // Check if user exists
-    const user = await db.user.findUnique({
-      where: { id },
-    });
+    const user = await db.user.findUnique({ where: { id } });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return jsonError(request, 'User not found.', 404);
     }
 
     if (!user.isBlocked) {
-      return NextResponse.json(
-        { error: 'User is not blocked' },
-        { status: 400 }
-      );
+      return jsonError(request, 'User is not blocked.', 400);
     }
 
-    // Unblock the user
     const updatedUser = await db.user.update({
       where: { id },
       data: {
@@ -39,11 +32,14 @@ export async function POST(
       },
     });
 
-    console.log(`\n✅ User unblocked: ${user.email}\n`);
+    logger.info('User unblocked', {
+      actorUserId: adminSession.user.id,
+      targetUserId: updatedUser.id,
+    });
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
       success: true,
-      message: 'User unblocked successfully',
+      message: 'User unblocked successfully.',
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -52,10 +48,6 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Error unblocking user:', error);
-    return NextResponse.json(
-      { error: 'Failed to unblock user' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/users/[id]/unblock' });
   }
 }

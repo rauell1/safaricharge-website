@@ -1,74 +1,57 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
+import { handleRouteError, jsonSuccess, parsePagination, createPaginationMeta } from '@/lib/api';
 
-/**
- * GET - List all users (Admin only)
- * This route should only be accessible by ADMIN role
- */
 export async function GET(request: NextRequest) {
   try {
-    // Get requester info from query params (should be validated via session in production)
+    await requireAdminUser(request);
+
     const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('requesterId');
-    const requesterRole = searchParams.get('requesterRole');
+    const role = searchParams.get('role');
+    const search = searchParams.get('search')?.trim();
+    const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    // Validate admin access
-    if (requesterRole !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Unauthorized. Admin access required.' },
-        { status: 403 }
-      );
-    }
+    const where = {
+      ...(role && role !== 'all' ? { role } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search } },
+              { email: { contains: search } },
+              { phone: { contains: search } },
+            ],
+          }
+        : {}),
+    };
 
-    // Verify the requester exists and is actually an admin
-    if (requesterId) {
-      const requester = await db.user.findUnique({
-        where: { id: requesterId },
-        select: { role: true, isBlocked: true },
-      });
-
-      if (!requester || requester.role !== 'ADMIN' || requester.isBlocked) {
-        return NextResponse.json(
-          { error: 'Unauthorized. Admin access required.' },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Fetch users with sensitive data excluded
-    const users = await db.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        avatar: true,
-        isEmailVerified: true,
-        isApproved: true,
-        isBlocked: true,
-        securityLevel: true,
-        subscriptionPlan: true,
-        subscriptionExpiry: true,
-        hasPaidAccess: true,
-        accessPermissions: true,
-        createdAt: true,
-        blockedAt: true,
-        blockReason: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // Get statistics
-    const [
-      total,
-      drivers,
-      admins,
-      fleetManagers,
-      employees,
-      blocked,
-    ] = await Promise.all([
-      db.user.count(),
+    const [users, total, drivers, admins, fleetManagers, employees, blocked] = await Promise.all([
+      db.user.findMany({
+        where,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          role: true,
+          avatar: true,
+          isEmailVerified: true,
+          isApproved: true,
+          isBlocked: true,
+          securityLevel: true,
+          subscriptionPlan: true,
+          subscriptionExpiry: true,
+          hasPaidAccess: true,
+          accessPermissions: true,
+          createdAt: true,
+          blockedAt: true,
+          blockReason: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      db.user.count({ where }),
       db.user.count({ where: { role: 'DRIVER' } }),
       db.user.count({ where: { role: 'ADMIN' } }),
       db.user.count({ where: { role: 'FLEET_MANAGER' } }),
@@ -76,7 +59,8 @@ export async function GET(request: NextRequest) {
       db.user.count({ where: { isBlocked: true } }),
     ]);
 
-    return NextResponse.json({
+    return jsonSuccess(request, {
+      success: true,
       users,
       stats: {
         total,
@@ -86,12 +70,9 @@ export async function GET(request: NextRequest) {
         employees,
         blocked,
       },
+      pagination: createPaginationMeta(total, page, pageSize),
     });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    );
+    return handleRouteError(request, error, { route: '/api/admin/users' });
   }
 }

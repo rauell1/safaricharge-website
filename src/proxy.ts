@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { applyCorsHeaders } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
 /**
  * Security middleware for SafariCharge
@@ -9,15 +11,6 @@ import type { NextRequest } from 'next/server';
  * 2. API route protection
  * 3. Request logging for audit
  */
-
-// Routes that require authentication
-const PROTECTED_API_ROUTES = [
-  '/api/admin',
-  '/api/fleet',
-  '/api/sessions',
-  '/api/users',
-  '/api/auth/me',
-];
 
 // Routes that require admin role
 const ADMIN_ONLY_ROUTES = [
@@ -36,7 +29,14 @@ const SECURITY_HEADERS = {
 
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const response = NextResponse.next();
+
+  if (pathname.startsWith('/api') && request.method === 'OPTIONS') {
+    return applyCorsHeaders(new NextResponse(null, { status: 204 }), request);
+  }
+
+  const response = pathname.startsWith('/api')
+    ? applyCorsHeaders(NextResponse.next(), request)
+    : NextResponse.next();
 
   // Apply security headers to all responses
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
@@ -61,27 +61,24 @@ export default function proxy(request: NextRequest) {
 
   // Log API requests for audit (in production, send to logging service)
   if (pathname.startsWith('/api')) {
-    const ip = request.headers.get('x-forwarded-for') || 
-                request.headers.get('x-real-ip') || 
-                'unknown';
+    const ip = request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
     const method = request.method;
     const userAgent = request.headers.get('user-agent') || 'unknown';
-    
-    // Only log in development or for sensitive routes
+
     if (process.env.NODE_ENV === 'development' || pathname.startsWith('/api/admin')) {
-      console.log(`[API] ${method} ${pathname} - IP: ${ip} - UA: ${userAgent.slice(0, 50)}`);
+      logger.info('API request received', {
+        method,
+        pathname,
+        ip,
+        userAgent: userAgent.slice(0, 80),
+      });
     }
   }
 
-  // For protected routes, we need to verify the session
-  // Since we're using client-side auth state, we'll rely on the API routes to validate
-  // This middleware adds an extra layer of protection
-
-  // Check for API routes that need admin access
   const isAdminRoute = ADMIN_ONLY_ROUTES.some(route => pathname.startsWith(route));
   if (isAdminRoute) {
-    // Add a header to indicate this route requires admin access
-    // The actual validation happens in the API route
     response.headers.set('X-Requires-Admin', 'true');
   }
 
