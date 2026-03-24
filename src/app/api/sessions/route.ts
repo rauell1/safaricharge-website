@@ -4,6 +4,9 @@ import { completeSessionSchema, createSessionSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
 import { createPaginationMeta, handleRouteError, jsonError, jsonSuccess, parsePagination } from '@/lib/api';
 
+const validSessionStatuses = new Set(['ACTIVE', 'COMPLETED', 'CANCELLED'] as const);
+type SessionStatusFilter = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
 function canViewAnySessions(role: string) {
   return role === 'ADMIN' || role === 'EMPLOYEE';
 }
@@ -13,13 +16,17 @@ export async function GET(request: NextRequest) {
     const session = await requireUser(request);
     const { searchParams } = new URL(request.url);
     const stationId = searchParams.get('stationId');
-    const status = searchParams.get('status');
+    const requestedStatus = searchParams.get('status');
+    const status: SessionStatusFilter | null =
+      requestedStatus && validSessionStatuses.has(requestedStatus as never)
+        ? (requestedStatus as SessionStatusFilter)
+        : null;
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 
     const where = {
       ...(canViewAnySessions(session.user.role) ? {} : { userId: session.user.id }),
       ...(stationId ? { stationId } : {}),
-      ...(status ? { status: status as never } : {}),
+      ...(status ? { status } : {}),
     };
 
     const [sessions, total] = await Promise.all([

@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { SESSION_CONFIG } from '@/lib/config';
-import { env } from '@/lib/env';
+import { env, getSessionSecret } from '@/lib/env';
 import { ApiError, getClientIp } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import { generateSecureToken } from '@/lib/security';
@@ -50,7 +50,7 @@ export type AuthenticatedSession = {
 
 function hashSessionToken(token: string) {
   return createHash('sha256')
-    .update(`${token}:${env.SESSION_SECRET}`)
+    .update(`${token}:${getSessionSecret()}`)
     .digest('hex');
 }
 

@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       const response = jsonSuccess(request, {
         success: true,
         message: 'Login successful.',
+        skipVerification: true,
         user: formatUserResponse(user),
       });
 

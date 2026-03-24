@@ -35,15 +35,8 @@ if (!parsedEnv.success) {
 }
 
 const envData = parsedEnv.data;
+const DEFAULT_SESSION_SECRET = 'development-session-secret-change-me';
 const isProduction = envData.NODE_ENV === 'production';
-
-if (isProduction && envData.SESSION_SECRET === 'development-session-secret-change-me') {
-  throw new Error('SESSION_SECRET must be set to a strong production value.');
-}
-
-if (isProduction && !envData.CRON_SECRET) {
-  throw new Error('CRON_SECRET must be configured in production.');
-}
 
 const allowedOrigins = (envData.ALLOWED_ORIGINS || envData.NEXT_PUBLIC_APP_URL)
   .split(',')
@@ -57,3 +50,19 @@ export const env = {
 } as const;
 
 export type AppEnv = typeof env;
+
+export function getSessionSecret() {
+  if (isProduction && envData.SESSION_SECRET === DEFAULT_SESSION_SECRET) {
+    throw new Error('SESSION_SECRET must be set to a strong production value.');
+  }
+
+  return envData.SESSION_SECRET;
+}
+
+export function getCronSecret() {
+  if (!envData.CRON_SECRET) {
+    throw new Error('CRON_SECRET must be configured before calling protected cron operations.');
+  }
+
+  return envData.CRON_SECRET;
+}

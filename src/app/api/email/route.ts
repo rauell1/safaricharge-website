@@ -9,7 +9,7 @@ import { checkRateLimit } from '@/lib/security';
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    const hasInternalAccess = authHeader === `Bearer ${env.CRON_SECRET}`;
+    const hasInternalAccess = Boolean(env.CRON_SECRET) && authHeader === `Bearer ${env.CRON_SECRET}`;
 
     if (!hasInternalAccess) {
       await requireAdminUser(request);

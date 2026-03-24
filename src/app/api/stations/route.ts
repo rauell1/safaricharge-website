@@ -4,6 +4,11 @@ import { stationMutationSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
 import { createPaginationMeta, handleRouteError, jsonError, jsonSuccess, parsePagination } from '@/lib/api';
 
+const validStationStatuses = new Set(['AVAILABLE', 'OCCUPIED', 'OFFLINE', 'MAINTENANCE'] as const);
+const validConnectorTypes = new Set(['CCS2', 'CHADEMO', 'TYPE2', 'TESLA'] as const);
+type StationStatusFilter = 'AVAILABLE' | 'OCCUPIED' | 'OFFLINE' | 'MAINTENANCE';
+type ConnectorTypeFilter = 'CCS2' | 'CHADEMO' | 'TYPE2' | 'TESLA';
+
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const earthRadiusKm = 6371;
   const deltaLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -21,8 +26,18 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const connectorType = searchParams.get('connectorType');
+    const requestedStatus = searchParams.get('status');
+    const status: StationStatusFilter | null =
+      requestedStatus && requestedStatus !== 'all' && validStationStatuses.has(requestedStatus as never)
+        ? (requestedStatus as StationStatusFilter)
+        : null;
+    const requestedConnectorType = searchParams.get('connectorType');
+    const connectorType: ConnectorTypeFilter | null =
+      requestedConnectorType &&
+      requestedConnectorType !== 'all' &&
+      validConnectorTypes.has(requestedConnectorType as never)
+        ? (requestedConnectorType as ConnectorTypeFilter)
+        : null;
     const search = searchParams.get('search')?.trim();
     const lat = searchParams.get('lat') ? Number(searchParams.get('lat')) : null;
     const lng = searchParams.get('lng') ? Number(searchParams.get('lng')) : null;
@@ -31,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const stations = await db.chargingStation.findMany({
       where: {
-        ...(status && status !== 'all' ? { status: status as never } : {}),
+        ...(status ? { status } : {}),
         ...(search
           ? {
               OR: [
@@ -41,11 +56,11 @@ export async function GET(request: NextRequest) {
               ],
             }
           : {}),
-        ...(connectorType && connectorType !== 'all'
+        ...(connectorType
           ? {
               connectors: {
                 some: {
-                  type: connectorType as never,
+                  type: connectorType,
                 },
               },
             }

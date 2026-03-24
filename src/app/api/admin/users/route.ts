@@ -3,12 +3,19 @@ import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
 import { handleRouteError, jsonSuccess, parsePagination, createPaginationMeta } from '@/lib/api';
 
+const validRoles = new Set(['DRIVER', 'ADMIN', 'FLEET_MANAGER', 'EMPLOYEE'] as const);
+type UserRoleFilter = 'DRIVER' | 'ADMIN' | 'FLEET_MANAGER' | 'EMPLOYEE';
+
 export async function GET(request: NextRequest) {
   try {
     await requireAdminUser(request);
 
     const { searchParams } = new URL(request.url);
-    const role = searchParams.get('role');
+    const requestedRole = searchParams.get('role');
+    const role: UserRoleFilter | null =
+      requestedRole && requestedRole !== 'all' && validRoles.has(requestedRole as never)
+        ? (requestedRole as UserRoleFilter)
+        : null;
     const search = searchParams.get('search')?.trim();
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 

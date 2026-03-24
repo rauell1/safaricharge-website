@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { env } from '@/lib/env';
+import { getCronSecret } from '@/lib/env';
 import { cleanupExpiredSessions } from '@/lib/session';
 import { processPendingJobs } from '@/lib/jobs';
 import { handleRouteError, jsonError, jsonSuccess } from '@/lib/api';
@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    const expectedAuth = `Bearer ${env.CRON_SECRET}`;
+    const expectedAuth = `Bearer ${getCronSecret()}`;
 
     if (authHeader !== expectedAuth) {
       return jsonError(request, 'Unauthorized.', 401);
