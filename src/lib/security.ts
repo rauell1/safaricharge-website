@@ -96,7 +96,7 @@ export function isValidPassword(password: string): boolean {
   return validatePassword(password).valid;
 }
 
-export function sanitizeString(input: string, maxLength = SECURITY_CONFIG.maxNotesLength): string {
+export function sanitizeString(input: string, maxLength: number = SECURITY_CONFIG.maxNotesLength): string {
   if (typeof input !== 'string') {
     return '';
   }

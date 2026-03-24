@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 
     const where: Prisma.UserWhereInput = {
-      ...(role && role !== 'all' ? { role } : {}),
+      ...(role ? { role } : {}),
       ...(search
         ? {
             OR: [
