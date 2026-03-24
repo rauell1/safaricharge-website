@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireAdminUser } from '@/lib/access-control';
 import { db } from '@/lib/db';
 import { handleRouteError, jsonSuccess, parsePagination, createPaginationMeta } from '@/lib/api';
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim();
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    const where = {
+    const where: Prisma.UserWhereInput = {
       ...(role && role !== 'all' ? { role } : {}),
       ...(search
         ? {

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireFleetAccess, requireUser } from '@/lib/access-control';
 import { createFleetSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    const where = canReadAllFleets(session.user.role)
+    const where: Prisma.FleetWhereInput = canReadAllFleets(session.user.role)
       ? {}
       : {
           ownerId: session.user.id,

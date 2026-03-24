@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireUser } from '@/lib/access-control';
 import { completeSessionSchema, createSessionSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
         : null;
     const { page, pageSize, skip, take } = parsePagination(searchParams);
 
-    const where = {
+    const where: Prisma.ChargingSessionWhereInput = {
       ...(canViewAnySessions(session.user.role) ? {} : { userId: session.user.id }),
       ...(stationId ? { stationId } : {}),
       ...(status ? { status } : {}),

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireRole } from '@/lib/access-control';
 import { stationMutationSchema } from '@/lib/validation';
 import { db } from '@/lib/db';
@@ -44,8 +45,7 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get('radius') ? Number(searchParams.get('radius')) : 50;
     const { page, pageSize } = parsePagination(searchParams);
 
-    const stations = await db.chargingStation.findMany({
-      where: {
+    const where: Prisma.ChargingStationWhereInput = {
         ...(status ? { status } : {}),
         ...(search
           ? {
@@ -65,7 +65,10 @@ export async function GET(request: NextRequest) {
               },
             }
           : {}),
-      },
+      };
+
+    const stations = await db.chargingStation.findMany({
+      where,
       include: {
         connectors: true,
       },
