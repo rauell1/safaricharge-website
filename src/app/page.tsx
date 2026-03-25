@@ -59,7 +59,7 @@ function AppFooter({
   return (
     <footer className="border-t border-gray-100 bg-white text-gray-600 mt-auto">
       <div className="w-full max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-gray-900 text-sm font-semibold uppercase mb-4">Platform</h3>
             <ul className="space-y-2">
@@ -119,32 +119,31 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
 
+  const isTabAllowed = (tab: AppTab) => {
+    if (tab === 'dashboard' || tab === 'map' || tab === 'history') {
+      return true;
+    }
+    if (tab === 'battery') return canAccessBattery;
+    if (tab === 'fleet') return canAccessFleet;
+    if (tab === 'analytics') return canAccessAnalytics;
+    if (tab === 'users') return canAccessUserManagement && isAdmin;
+    if (tab === 'employees') return canAccessEmployeeApproval && isAdmin;
+    return false;
+  };
+
+  const safeActiveTab = isTabAllowed(activeTab) ? activeTab : 'dashboard';
+
+  const handleTabChange = (tab: AppTab) => {
+    if (isTabAllowed(tab)) {
+      setActiveTab(tab);
+      return;
+    }
+    setActiveTab('dashboard');
+  };
+
   useEffect(() => {
     void initializeAuth();
   }, [initializeAuth]);
-
-  useEffect(() => {
-    const isAllowedTab =
-      activeTab === 'dashboard' ||
-      activeTab === 'map' ||
-      activeTab === 'history' ||
-      (activeTab === 'battery' && canAccessBattery) ||
-      (activeTab === 'fleet' && canAccessFleet) ||
-      (activeTab === 'analytics' && canAccessAnalytics) ||
-      (activeTab === 'users' && canAccessUserManagement) ||
-      (activeTab === 'employees' && canAccessEmployeeApproval);
-
-    if (!isAllowedTab) {
-      setActiveTab('dashboard');
-    }
-  }, [
-    activeTab,
-    canAccessAnalytics,
-    canAccessBattery,
-    canAccessEmployeeApproval,
-    canAccessFleet,
-    canAccessUserManagement,
-  ]);
 
   if (authStatus === 'loading') {
     return <LoadingScreen />;
@@ -171,27 +170,29 @@ export default function Home() {
     <CurrencyProvider>
       <div className="min-h-screen flex flex-col bg-background">
         <Header
-          activeTab={activeTab}
-          onTabChange={(tab) => setActiveTab(tab as AppTab)}
-          onHome={() => setActiveTab('dashboard')}
+          activeTab={safeActiveTab}
+          onTabChange={(tab) => handleTabChange(tab as AppTab)}
+          onHome={() => handleTabChange('dashboard')}
         />
 
         <main className="flex-1 w-full max-w-[1600px] mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          {activeTab === 'dashboard' && <Dashboard onNavigate={(tab) => setActiveTab(tab as AppTab)} user={user} />}
-          {activeTab === 'map' && <StationMap stations={mockStations} onStationSelect={() => undefined} />}
-          {activeTab === 'history' && <ChargingHistory />}
-          {activeTab === 'battery' && canAccessBattery && <BatteryRepurposing />}
-          {activeTab === 'fleet' && canAccessFleet && <FleetManagement user={user} />}
-          {activeTab === 'analytics' && canAccessAnalytics && <AIAnalyticsDashboard />}
-          {activeTab === 'users' && isAdmin && <AdminUserManagement />}
-          {activeTab === 'employees' && isAdmin && <EmployeeApprovalDashboard />}
+          {safeActiveTab === 'dashboard' && (
+            <Dashboard onNavigate={(tab) => handleTabChange(tab as AppTab)} user={user} />
+          )}
+          {safeActiveTab === 'map' && <StationMap stations={mockStations} onStationSelect={() => undefined} />}
+          {safeActiveTab === 'history' && <ChargingHistory />}
+          {safeActiveTab === 'battery' && canAccessBattery && <BatteryRepurposing />}
+          {safeActiveTab === 'fleet' && canAccessFleet && <FleetManagement user={user} />}
+          {safeActiveTab === 'analytics' && canAccessAnalytics && <AIAnalyticsDashboard />}
+          {safeActiveTab === 'users' && isAdmin && <AdminUserManagement />}
+          {safeActiveTab === 'employees' && isAdmin && <EmployeeApprovalDashboard />}
         </main>
 
         <AppFooter
           canAccessBattery={canAccessBattery}
           canAccessFleet={canAccessFleet}
           canAccessAnalytics={canAccessAnalytics}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
       </div>
     </CurrencyProvider>

@@ -105,6 +105,8 @@ Optional future storage variables:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 
+When deployed on Vercel with Vercel Postgres, the app will automatically use `POSTGRES_PRISMA_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, or `POSTGRES_URL_NO_SSL` if `DATABASE_URL` is not provided.
+
 ## Current Structure
 
 ```text

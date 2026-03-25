@@ -424,7 +424,7 @@ export function Landing({ onGetStarted }: LandingProps) {
         </div>
         
         {/* Free-Floating Icons - carried by water/air effect */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden lg:block">
           {/* Scattered across the section */}
           <FloatingIcon icon={Zap} initialX={80} initialY={120} size={36} color="rgba(255, 215, 0, 0.7)" delay={0} />
           <FloatingIcon icon={Battery} initialX={280} initialY={100} size={32} color="rgba(142, 182, 155, 0.6)" delay={0.5} />
@@ -460,7 +460,7 @@ export function Landing({ onGetStarted }: LandingProps) {
         </div>
         
         {/* Animated Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
           <motion.div
             animate={{
               scale: [1, 1.3, 1],
@@ -527,7 +527,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             <Button 
               size="lg"
               onClick={onGetStarted}
-              className="bg-white text-[#051F20] hover:bg-[#DAF1DE] text-lg px-8 h-14 shadow-2xl font-semibold"
+              className="bg-white text-[#051F20] hover:bg-[#DAF1DE] text-lg px-8 h-14 shadow-2xl font-semibold w-full sm:w-auto"
             >
               Get Started
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -541,7 +541,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                   networkSection.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 text-lg px-8 h-14 backdrop-blur-sm"
+              className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 text-lg px-8 h-14 backdrop-blur-sm w-full sm:w-auto"
             >
               <Globe className="w-5 h-5 mr-2" />
               Explore Network
@@ -553,7 +553,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -591,7 +591,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       </section>
 
       {/* Network Coverage Section */}
-      <section id="network" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#fafcfc]">
+      <section id="network" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#fafcfc] scroll-mt-24">
         <div className="w-full max-w-[1600px] mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -610,7 +610,7 @@ export function Landing({ onGetStarted }: LandingProps) {
           </motion.div>
 
           {/* County Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
             {counties.map((county, index) => (
               <motion.div
                 key={county.name}
@@ -703,7 +703,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white scroll-mt-24">
         <div className="w-full max-w-[1600px] mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -760,7 +760,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       </section>
 
       {/* Sustainability Section */}
-      <section id="sustainability" className="py-24 px-4 bg-gradient-to-br from-[#021024] via-[#052659] to-[#235347] relative overflow-hidden">
+      <section id="sustainability" className="py-24 px-4 bg-gradient-to-br from-[#021024] via-[#052659] to-[#235347] relative overflow-hidden scroll-mt-24">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(142,182,155,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(84,131,179,0.3) 0%, transparent 50%)'
@@ -844,7 +844,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#f0f7f5]">
+      <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#f0f7f5] scroll-mt-24">
         <div className="w-full max-w-[1600px] mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

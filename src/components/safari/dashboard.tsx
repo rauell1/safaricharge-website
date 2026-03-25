@@ -210,7 +210,7 @@ export function Dashboard({ onNavigate, user }: DashboardProps) {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -254,10 +254,10 @@ export function Dashboard({ onNavigate, user }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className={`grid gap-4 ${
-              quickActions.length <= 2 ? 'grid-cols-2' :
-              quickActions.length <= 3 ? 'grid-cols-3' :
-              quickActions.length <= 4 ? 'grid-cols-2 md:grid-cols-4' :
-              'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+              quickActions.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' :
+              quickActions.length <= 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+              quickActions.length <= 4 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4' :
+              'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
             }`}>
               {quickActions.map((action, index) => (
                 <motion.div
