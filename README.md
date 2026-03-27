@@ -4,6 +4,15 @@ SafariCharge is a Next.js 16 EV charging platform for drivers, fleet managers, o
 
 This repository now includes a production audit and a durable project map so future work can start from architecture context instead of rescanning the full codebase.
 
+## Quickstart
+
+1. `npm install`
+2. Copy `.env.example` to `.env` and fill in secrets.
+3. `npm run db:push` to create the local SQLite database.
+4. Optional: `bun run db:seed` to load demo data.
+5. `npm run dev` to start the app.
+6. `npm run lint` to verify the workspace.
+
 ## Core Features
 
 - Charging station discovery and filtering
@@ -37,6 +46,7 @@ This repository now includes a production audit and a durable project map so fut
 
 - Node.js 20+ for the web app
 - Bun if you want to run the current seed script directly
+- SQLite is used by default for local development; Vercel Postgres is supported in production
 
 ### Install
 
@@ -44,10 +54,18 @@ This repository now includes a production audit and a durable project map so fut
 npm install
 ```
 
+`npm install` runs `prisma generate` via the postinstall hook.
+
 ### Configure environment
 
 ```powershell
 Copy-Item .env.example .env
+```
+
+On macOS/Linux:
+
+```bash
+cp .env.example .env
 ```
 
 Fill in the values in `.env`.
@@ -55,8 +73,7 @@ Fill in the values in `.env`.
 ### Prisma setup
 
 ```bash
-npx prisma generate
-npx prisma db push
+npm run db:push
 ```
 
 Optional seed:
@@ -64,6 +81,8 @@ Optional seed:
 ```bash
 bun run db:seed
 ```
+
+Local data lives in `db/` (the default `DATABASE_URL` points at `file:./db/safaricharge.db`). Delete the SQLite file if you need a clean slate, then rerun `npm run db:push`.
 
 ### Start the app
 
@@ -77,6 +96,15 @@ npm run dev
 npm run build
 npm run start
 ```
+
+### Project scripts
+
+- `npm run lint` — ESLint across the repo
+- `npm run build` — Next.js production build
+- `npm run dev` — local development server
+- `npm run db:push` — sync Prisma schema to the local database
+- `npm run db:reset` — reset the local database (interactive)
+- `npm run db:seed` — seed demo data with Bun
 
 ## Environment Variables
 
@@ -110,9 +138,18 @@ When deployed on Vercel with Vercel Postgres, the app will automatically use `PO
 ## Current Structure
 
 ```text
+db/
+  safaricharge.db (created locally after db push)
+docs/
+  PROJECT_REFERENCE.md
+  PRODUCTION_AUDIT.md
+download/
+  README.md (generated assets)
+examples/
 prisma/
   schema.prisma
   seed.ts
+public/
 src/
   app/
     api/
@@ -130,9 +167,7 @@ src/
   stores/
   types/
   proxy.ts
-docs/
-  PROJECT_REFERENCE.md
-  PRODUCTION_AUDIT.md
+upload/ (reference images)
 ```
 
 ## Important Runtime Notes
