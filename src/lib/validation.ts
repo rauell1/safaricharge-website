@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SECURITY_CONFIG } from '@/lib/config';
+import { PAGINATION_CONFIG, SECURITY_CONFIG, STATION_QUERY_CONFIG } from '@/lib/config';
 
 const trimmedString = (maxLength: number) =>
   z
@@ -106,3 +106,34 @@ export const stationMutationSchema = z.object({
     )
     .default([]),
 });
+
+
+export const stationQuerySchema = z
+  .object({
+    status: z.enum(['AVAILABLE', 'OCCUPIED', 'OFFLINE', 'MAINTENANCE', 'all']).optional(),
+    connectorType: z.enum(['CCS2', 'CHADEMO', 'TYPE2', 'TESLA', 'all']).optional(),
+    search: z.string().trim().max(STATION_QUERY_CONFIG.maxSearchLength).optional(),
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lng: z.coerce.number().min(-180).max(180).optional(),
+    radius: z.coerce.number().min(STATION_QUERY_CONFIG.minRadiusKm).max(STATION_QUERY_CONFIG.maxRadiusKm).default(STATION_QUERY_CONFIG.defaultRadiusKm),
+    page: z.coerce.number().int().min(1).default(PAGINATION_CONFIG.defaultPage),
+    pageSize: z.coerce.number().int().min(1).max(PAGINATION_CONFIG.maxPageSize).default(PAGINATION_CONFIG.defaultPageSize),
+  })
+  .superRefine((value, ctx) => {
+    const hasLat = typeof value.lat === 'number';
+    const hasLng = typeof value.lng === 'number';
+
+    if (hasLat !== hasLng) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['lat'],
+        message: 'lat and lng must be provided together.',
+      });
+    }
+  })
+  .transform((value) => ({
+    ...value,
+    lat: value.lat ?? null,
+    lng: value.lng ?? null,
+    search: value.search ? value.search.trim() : null,
+  }));

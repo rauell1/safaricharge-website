@@ -46,3 +46,13 @@ export const JOB_CONFIG = {
   batchSize: 10,
   retryDelayMs: 1000 * 60 * 5,
 } as const;
+
+
+export const STATION_QUERY_CONFIG = {
+  defaultRadiusKm: 50,
+  maxRadiusKm: 500,
+  minRadiusKm: 1,
+  geoCandidateMultiplier: 5,
+  maxGeoCandidates: 500,
+  maxSearchLength: 100,
+} as const;
