@@ -177,6 +177,11 @@ upload/ (reference images)
 - Input validation should use shared Zod schemas from `src/lib/validation.ts`.
 - Background email work is queued through the `Job` model and drained by the cron route.
 - `GET /api` is the health check endpoint.
+- Automatic versioning and rollback:
+  - Prisma mutations are wrapped by `src/lib/versioning.ts`, which records snapshots and updates the `VersionPointer` singleton.
+  - GET `/api/admin/versioning` (admin) returns `{ current_version, versions }` assembled from `VersionEntry`.
+  - POST `/api/admin/versioning` with `{ targetVersionId, metadata? }` clones the chosen version, tags `rolled_back_from`, and moves the pointer without deleting history.
+  - Use `withVersioning(db, mutation, snapshotBuilder, metadata)` for non-Prisma mutations; run `npm run db:push` if the new `Version*` tables are missing locally.
 
 ## Deployment
 

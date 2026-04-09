@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import path from 'path'
 import { env } from '@/lib/env'
+import { attachVersioningMiddleware } from '@/lib/versioning'
 
 // Prisma's SQLite query engine resolves relative paths from the binary
 // location rather than the process working directory. Convert relative
@@ -33,10 +34,12 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    datasources: { db: { url: resolveDatabaseUrl() } },
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  })
+  attachVersioningMiddleware(
+    globalForPrisma.prisma ??
+      new PrismaClient({
+        datasources: { db: { url: resolveDatabaseUrl() } },
+        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      })
+  )
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

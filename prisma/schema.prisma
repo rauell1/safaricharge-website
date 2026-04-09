@@ -340,3 +340,24 @@ model Job {
   @@index([status, scheduledFor])
   @@index([createdAt])
 }
+
+model VersionEntry {
+  id              String   @id @default(cuid())
+  versionNumber   Int      @unique
+  stateOrCode     Json
+  metadata        Json?
+  rolledBackFrom  String?
+  createdAt       DateTime @default(now())
+  stateHash       String?
+  pointers        VersionPointer[]
+
+  @@index([createdAt])
+  @@index([versionNumber])
+}
+
+model VersionPointer {
+  id               String        @id @default("primary")
+  currentVersionId String?
+  currentVersion   VersionEntry? @relation(fields: [currentVersionId], references: [id], onDelete: SetNull)
+  updatedAt        DateTime      @updatedAt
+}

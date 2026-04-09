@@ -36,6 +36,8 @@ SafariCharge is a Next.js 16 application for EV charging operations. It combines
   - Use these in every protected route.
 - `src/lib/api.ts`
   - Shared JSON success/error helpers, pagination, CORS application, and route error handling.
+- `src/lib/versioning.ts`
+  - Central versioning layer with Prisma middleware, `withVersioning` helper, and snapshot hashing.
 - `src/lib/validation.ts`
   - Shared Zod schemas for auth, fleet, stations, and session mutation payloads.
 - `src/lib/security.ts`
@@ -48,6 +50,8 @@ SafariCharge is a Next.js 16 application for EV charging operations. It combines
   - Transactional email rendering and provider integration.
 - `src/app/api/**`
   - App Router API surface. All high-risk routes now rely on server-side session and RBAC checks.
+- `src/app/api/admin/versioning/route.ts`
+  - Admin-only GET for the version store and POST rollback that clones a prior version instead of deleting history.
 
 ## Core Trust Boundaries
 
@@ -83,6 +87,7 @@ These are the rules that matter most when changing this codebase:
 ## Operational Notes
 
 - After every Prisma schema change, run `prisma generate`.
+- Version history is persisted in the new `VersionEntry` and `VersionPointer` tables; `attachVersioningMiddleware(db)` auto-logs Prisma mutations.
 - The cron route requires `Authorization: Bearer <CRON_SECRET>`.
 - The health endpoint is `GET /api`.
 - Vercel must point its Root Directory at `safaricharge-website`.
