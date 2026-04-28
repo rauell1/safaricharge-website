@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { useAuthStore, useUser, useIsAdmin, useCanAccessBattery, useCanAccessFleet, useCanAccessAnalytics } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,46 +47,6 @@ interface HeaderProps {
   onHome?: () => void;
 }
 
-// ── Theme Toggle Button ──────────────────────────────────────
-function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
-    // Render a placeholder to avoid layout shift
-    return <div className="w-9 h-9" />;
-  }
-
-  const isDark = resolvedTheme === 'dark';
-
-  return (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="theme-toggle"
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-    >
-      <motion.div
-        key={isDark ? 'moon' : 'sun'}
-        initial={{ rotate: -30, opacity: 0, scale: 0.7 }}
-        animate={{ rotate: 0, opacity: 1, scale: 1 }}
-        exit={{ rotate: 30, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        {isDark ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
-      </motion.div>
-    </motion.button>
-  );
-}
-
-// ── Header Component ─────────────────────────────────────────
 export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
   const user = useUser();
   const isAdmin = useIsAdmin();
@@ -95,6 +55,11 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
   const canAccessAnalytics = useCanAccessAnalytics();
   const logout = useAuthStore((state) => state.logout);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const isDark = resolvedTheme === 'dark';
+
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -123,9 +88,6 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
     setMobileMenuOpen(false);
   };
 
-  const activeClass = 'bg-gradient-to-r from-[#235347] to-[#052659] text-white shadow-md';
-  const inactiveClass = 'text-[var(--nav-text)] hover:text-[var(--nav-text-hover)] hover:bg-[var(--nav-bg-hover)]';
-
   const getSubscriptionBadge = () => {
     if (!user) return null;
     switch (user.subscriptionPlan) {
@@ -145,21 +107,23 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
         );
       default:
         return (
-          <Badge variant="outline" className="text-xs border-[#8EB69B] text-[var(--primary)]">
+          <Badge variant="outline" className="text-xs border-primary text-primary">
             Free
           </Badge>
         );
     }
   };
 
+  /* ── shared nav button classes ─────────────────────────────── */
+  const activeNavCls = 'bg-gradient-to-r from-[#235347] to-[#052659] text-white shadow-md';
+  const ghostNavCls  = 'text-foreground/70 hover:text-primary hover:bg-secondary';
+
+  const activeFleetCls    = 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white shadow-md';
+  const activePremiumCls  = 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white shadow-md';
+  const activeAnalyticsCls = 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md';
+
   return (
-    <header
-      className="sticky top-0 z-50 w-full border-b backdrop-blur supports-[backdrop-filter]:bg-[var(--header-bg)]"
-      style={{
-        borderColor: 'var(--header-border)',
-        backgroundColor: 'var(--header-bg)',
-      }}
-    >
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="w-full max-w-[1600px] mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* Logo */}
@@ -176,10 +140,10 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent dark:from-[#8EB69B] dark:to-[#DAF1DE]">
+              <span className="text-lg font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
                 SafariCharge
               </span>
-              <span className="text-[10px] text-[#8EB69B] -mt-1 hidden sm:block">POWERING AFRICA</span>
+              <span className="text-[10px] text-primary -mt-1 hidden sm:block">POWERING AFRICA</span>
             </div>
           </button>
         </motion.div>
@@ -197,7 +161,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
               variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => handleNavClick('dashboard')}
-              className={`gap-2 transition-all ${activeTab === 'dashboard' ? activeClass : inactiveClass}`}
+              className={`gap-2 transition-all ${activeTab === 'dashboard' ? activeNavCls : ghostNavCls}`}
             >
               <Home className="h-4 w-4" />
               <span className="hidden lg:inline">Home</span>
@@ -210,7 +174,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${activeTab === item.id ? activeClass : inactiveClass}`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeNavCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -218,18 +182,13 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
             </motion.div>
           ))}
 
-          {/* Premium */}
           {premiumNavItems.map((item, index) => (
             <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white shadow-md'
-                    : inactiveClass
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activePremiumCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -240,18 +199,13 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
             </motion.div>
           ))}
 
-          {/* Fleet */}
           {fleetNavItems.map((item, index) => (
             <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white shadow-md'
-                    : inactiveClass
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeFleetCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -262,18 +216,13 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
             </motion.div>
           ))}
 
-          {/* Analytics */}
           {analyticsNavItems.map((item, index) => (
             <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id
-                    ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md'
-                    : inactiveClass
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -281,12 +230,11 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
             </motion.div>
           ))}
 
-          {/* Admin */}
           {isAdmin && (
             <>
               <div className="w-px h-6 bg-border mx-2" />
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-                <Badge className="gap-1.5 text-xs border-[#5483B3]/30 text-[#052659] dark:text-[#8EB69B] bg-[#5483B3]/10 font-medium">
+                <Badge className="gap-1.5 text-xs border-[#5483B3]/30 text-[#052659] dark:text-[#C1E8FF] bg-[#5483B3]/10 font-medium">
                   <Shield className="h-3 w-3" />
                   Admin
                 </Badge>
@@ -297,11 +245,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                     variant={activeTab === item.id ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleNavClick(item.id)}
-                    className={`gap-2 transition-all ${
-                      activeTab === item.id
-                        ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md'
-                        : inactiveClass
-                    }`}
+                    className={`gap-2 transition-all ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -312,33 +256,40 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           )}
         </motion.nav>
 
-        {/* Right Side Actions */}
+        {/* Right side */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
           className="flex items-center gap-2"
         >
-          {/* Network status pill */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-[#8EB69B]/30">
+          {/* Battery Status */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-primary/20">
             <div className="relative">
-              <div className="w-4 h-2.5 rounded-sm border border-[#235347] dark:border-[#8EB69B] relative">
+              <div className="w-4 h-2.5 rounded-sm border border-primary relative">
                 <div className="absolute inset-0.5 bg-gradient-to-r from-[#8EB69B] to-[#235347] rounded-sm" style={{ width: '95%' }} />
               </div>
-              <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1.5 bg-[#235347] dark:bg-[#8EB69B] rounded-r-sm" />
+              <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1.5 bg-primary rounded-r-sm" />
             </div>
-            <span className="text-xs font-semibold text-[var(--primary)]">98% Online</span>
+            <span className="text-xs font-semibold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent dark:from-[#8EB69B] dark:to-[#C1E8FF]">
+              98% Online
+            </span>
           </div>
 
-          {/* Dark/Light Mode Toggle */}
-          <ThemeToggle />
-
-          {/* Notifications */}
+          {/* Dark / Light toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="relative hover:bg-[var(--nav-bg-hover)] text-[var(--nav-text)] hover:text-[var(--nav-text-hover)]"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="relative hover:bg-secondary text-foreground/70 hover:text-primary transition-colors"
           >
+            <Sun className={`h-5 w-5 transition-all duration-300 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90 absolute'}`} />
+            <Moon className={`h-5 w-5 transition-all duration-300 ${!isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 rotate-90 absolute'}`} />
+          </Button>
+
+          {/* Notifications */}
+          <Button variant="ghost" size="icon" className="relative hover:bg-secondary text-foreground/70 hover:text-primary">
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-r from-[#8EB69B] to-[#235347] text-[10px] font-semibold text-white flex items-center justify-center">
               3
@@ -348,8 +299,8 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:ring-2 hover:ring-[#8EB69B]/30 transition-all">
-                <Avatar className="h-9 w-9 ring-2 ring-[#8EB69B]/30">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:ring-2 hover:ring-primary/30 transition-all">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/30">
                   <AvatarImage src={user?.avatar || undefined} />
                   <AvatarFallback className="bg-gradient-to-br from-[#235347] to-[#052659] text-white font-medium">
                     {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'U'}
@@ -366,6 +317,12 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border" />
+              {/* Theme toggle inside dropdown too */}
+              <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer text-foreground/80 focus:bg-secondary">
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {isDark ? 'Light mode' : 'Dark mode'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 onClick={() => void logout()}
                 className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive"
@@ -379,7 +336,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="text-[var(--nav-text)]">
+              <Button variant="ghost" size="icon" className="text-foreground/70">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -396,9 +353,22 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-2">
+                {/* Theme toggle in mobile menu */}
+                <Button
+                  variant="outline"
+                  className="justify-start gap-3 h-11 border-border text-foreground/70"
+                  onClick={toggleTheme}
+                >
+                  {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  {isDark ? 'Light mode' : 'Dark mode'}
+                </Button>
+
+                <div className="h-px bg-border my-1" />
+
+                {/* Home */}
                 <Button
                   variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-                  className={`justify-start gap-3 h-11 ${activeTab === 'dashboard' ? activeClass : inactiveClass}`}
+                  className={`justify-start gap-3 h-11 ${activeTab === 'dashboard' ? activeNavCls : ghostNavCls}`}
                   onClick={() => handleNavClick('dashboard')}
                 >
                   <Home className="h-5 w-5" />
@@ -409,7 +379,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeClass : inactiveClass}`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeNavCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
@@ -421,14 +391,14 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id ? 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white' : inactiveClass
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activePremiumCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
-                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] px-1.5 py-0 border-0 ml-auto font-semibold">PRO</Badge>
+                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] px-1.5 py-0 border-0 ml-auto font-semibold">
+                      PRO
+                    </Badge>
                   </Button>
                 ))}
 
@@ -436,14 +406,14 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id ? 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white' : inactiveClass
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeFleetCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
-                    <Badge className="bg-gradient-to-r from-[#8EB69B] to-[#235347] text-white text-[10px] px-1.5 py-0 border-0 ml-auto font-semibold">FLEET</Badge>
+                    <Badge className="bg-gradient-to-r from-[#8EB69B] to-[#235347] text-white text-[10px] px-1.5 py-0 border-0 ml-auto font-semibold">
+                      FLEET
+                    </Badge>
                   </Button>
                 ))}
 
@@ -451,9 +421,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white' : inactiveClass
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
@@ -469,9 +437,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                       <Button
                         key={item.id}
                         variant={activeTab === item.id ? 'default' : 'ghost'}
-                        className={`justify-start gap-3 h-11 ${
-                          activeTab === item.id ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white' : inactiveClass
-                        }`}
+                        className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                         onClick={() => handleNavClick(item.id)}
                       >
                         <item.icon className="h-5 w-5" />
@@ -480,13 +446,6 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                     ))}
                   </>
                 )}
-
-                {/* Theme toggle in mobile menu */}
-                <div className="h-px bg-border my-2" />
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm text-muted-foreground">Theme</span>
-                  <ThemeToggle />
-                </div>
               </div>
             </SheetContent>
           </Sheet>
