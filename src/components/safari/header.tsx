@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { useAuthStore, useUser, useIsAdmin, useCanAccessBattery, useCanAccessFleet, useCanAccessAnalytics } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,10 +23,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { 
-  Zap, 
-  Menu, 
-  LogOut, 
+import {
+  Zap,
+  Menu,
+  LogOut,
   Bell,
   BarChart3,
   Users,
@@ -35,7 +36,9 @@ import {
   Home,
   Crown,
   Star,
-  LayoutDashboard
+  LayoutDashboard,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -52,28 +55,29 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
   const canAccessAnalytics = useCanAccessAnalytics();
   const logout = useAuthStore((state) => state.logout);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const isDark = resolvedTheme === 'dark';
+
+  const toggleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'map', label: 'Charging Map', icon: MapPin },
   ];
 
-  // Battery toolkit only for users with PREMIUM (or ADMIN)
   const premiumNavItems = canAccessBattery
     ? [{ id: 'battery', label: 'Battery Toolkit', icon: Recycle }]
     : [];
 
-  // Fleet management for fleet managers and admins
   const fleetNavItems = canAccessFleet
     ? [{ id: 'fleet', label: 'Fleet Management', icon: Users }]
     : [];
 
-  // Analytics nav item - visible to ADMIN and EMPLOYEE
   const analyticsNavItems = canAccessAnalytics
     ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3 }]
     : [];
 
-  // Admin-only items: Employee Approval, User Management
   const adminNavItems = isAdmin ? [
     { id: 'employees', label: 'Employees', icon: Shield },
     { id: 'users', label: 'Users', icon: Users },
@@ -103,23 +107,32 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
         );
       default:
         return (
-          <Badge variant="outline" className="text-xs border-[#8EB69B] text-[#235347]">
+          <Badge variant="outline" className="text-xs border-primary text-primary">
             Free
           </Badge>
         );
     }
   };
 
+  /* ── shared nav button classes ─────────────────────────────── */
+  const activeNavCls = 'bg-gradient-to-r from-[#235347] to-[#052659] text-white shadow-md';
+  const ghostNavCls  = 'text-foreground/70 hover:text-primary hover:bg-secondary';
+
+  const activeFleetCls    = 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white shadow-md';
+  const activePremiumCls  = 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white shadow-md';
+  const activeAnalyticsCls = 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md';
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="w-full max-w-[1600px] mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+
         {/* Logo */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <button 
+          <button
             onClick={() => onHome?.() || handleNavClick('dashboard')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
@@ -127,34 +140,28 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">SafariCharge</span>
-              <span className="text-[10px] text-[#8EB69B] -mt-1 hidden sm:block">POWERING AFRICA</span>
+              <span className="text-lg font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
+                SafariCharge
+              </span>
+              <span className="text-[10px] text-primary -mt-1 hidden sm:block">POWERING AFRICA</span>
             </div>
           </button>
         </motion.div>
 
         {/* Desktop Navigation */}
-        <motion.nav 
+        <motion.nav
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="hidden md:flex items-center gap-1"
         >
-          {/* Home Button */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
+          {/* Home */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <Button
               variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => handleNavClick('dashboard')}
-              className={`gap-2 transition-all ${
-                activeTab === 'dashboard' 
-                  ? 'bg-gradient-to-r from-[#235347] to-[#052659] text-white shadow-md' 
-                  : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-              }`}
+              className={`gap-2 transition-all ${activeTab === 'dashboard' ? activeNavCls : ghostNavCls}`}
             >
               <Home className="h-4 w-4" />
               <span className="hidden lg:inline">Home</span>
@@ -162,45 +169,26 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           </motion.div>
 
           {navItems.filter(item => item.id !== 'dashboard').map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-            >
+            <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-r from-[#235347] to-[#052659] text-white shadow-md' 
-                    : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeNavCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </Button>
             </motion.div>
           ))}
-          
-          {/* Premium Features */}
+
           {premiumNavItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + index * 0.05 }}
-            >
+            <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white shadow-md' 
-                    : 'text-gray-600 hover:text-[#052659] hover:bg-[#f0f7f5]'
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activePremiumCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -210,24 +198,14 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
               </Button>
             </motion.div>
           ))}
-          
-          {/* Fleet Management */}
+
           {fleetNavItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18 + index * 0.05 }}
-            >
+            <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white shadow-md' 
-                    : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeFleetCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
@@ -237,61 +215,37 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
               </Button>
             </motion.div>
           ))}
-          
-          {/* Analytics - visible to ADMIN and EMPLOYEE */}
+
           {analyticsNavItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + index * 0.05 }}
-            >
+            <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + index * 0.05 }}>
               <Button
                 variant={activeTab === item.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => handleNavClick(item.id)}
-                className={`gap-2 transition-all ${
-                  activeTab === item.id 
-                    ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md' 
-                    : 'text-gray-600 hover:text-[#5483B3] hover:bg-[#f0f7f5]'
-                }`}
+                className={`gap-2 transition-all ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </Button>
             </motion.div>
           ))}
-          
-          {/* Admin-only section */}
+
           {isAdmin && (
             <>
-              <div className="w-px h-6 bg-gray-200 mx-2" />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Badge className="gap-1.5 text-xs border-[#5483B3]/30 text-[#052659] bg-[#5483B3]/10 font-medium">
+              <div className="w-px h-6 bg-border mx-2" />
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
+                <Badge className="gap-1.5 text-xs border-[#5483B3]/30 text-[#052659] dark:text-[#C1E8FF] bg-[#5483B3]/10 font-medium">
                   <Shield className="h-3 w-3" />
                   Admin
                 </Badge>
               </motion.div>
               {adminNavItems.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 + index * 0.05 }}
-                >
+                <motion.div key={item.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + index * 0.05 }}>
                   <Button
                     variant={activeTab === item.id ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handleNavClick(item.id)}
-                    className={`gap-2 transition-all ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white shadow-md' 
-                        : 'text-gray-600 hover:text-[#5483B3] hover:bg-[#f0f7f5]'
-                    }`}
+                    className={`gap-2 transition-all ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -302,26 +256,40 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           )}
         </motion.nav>
 
-        {/* Right side actions */}
-        <motion.div 
+        {/* Right side */}
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-2"
         >
-          {/* Battery Status Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#f0f7f5] to-[#e8f4f0] border border-[#8EB69B]/30">
+          {/* Battery Status */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-primary/20">
             <div className="relative">
-              <div className="w-4 h-2.5 rounded-sm border border-[#235347] relative">
+              <div className="w-4 h-2.5 rounded-sm border border-primary relative">
                 <div className="absolute inset-0.5 bg-gradient-to-r from-[#8EB69B] to-[#235347] rounded-sm" style={{ width: '95%' }} />
               </div>
-              <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1.5 bg-[#235347] rounded-r-sm" />
+              <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-1.5 bg-primary rounded-r-sm" />
             </div>
-            <span className="text-xs font-semibold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">98% Online</span>
+            <span className="text-xs font-semibold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent dark:from-[#8EB69B] dark:to-[#C1E8FF]">
+              98% Online
+            </span>
           </div>
 
+          {/* Dark / Light toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="relative hover:bg-secondary text-foreground/70 hover:text-primary transition-colors"
+          >
+            <Sun className={`h-5 w-5 transition-all duration-300 ${isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90 absolute'}`} />
+            <Moon className={`h-5 w-5 transition-all duration-300 ${!isDark ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 rotate-90 absolute'}`} />
+          </Button>
+
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative hover:bg-[#f0f7f5] text-gray-600 hover:text-[#235347]">
+          <Button variant="ghost" size="icon" className="relative hover:bg-secondary text-foreground/70 hover:text-primary">
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-r from-[#8EB69B] to-[#235347] text-[10px] font-semibold text-white flex items-center justify-center">
               3
@@ -331,8 +299,8 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:ring-2 hover:ring-[#8EB69B]/30 transition-all">
-                <Avatar className="h-9 w-9 ring-2 ring-[#8EB69B]/30">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:ring-2 hover:ring-primary/30 transition-all">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/30">
                   <AvatarImage src={user?.avatar || undefined} />
                   <AvatarFallback className="bg-gradient-to-br from-[#235347] to-[#052659] text-white font-medium">
                     {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'U'}
@@ -340,20 +308,24 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-white border border-gray-100" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-card border-border" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-gray-900">{user?.name || 'User'}</p>
-                  <p className="text-xs leading-none text-gray-500">{user?.email}</p>
-                  <div className="mt-1.5">
-                    {getSubscriptionBadge()}
-                  </div>
+                  <p className="text-sm font-medium leading-none text-card-foreground">{user?.name || 'User'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  <div className="mt-1.5">{getSubscriptionBadge()}</div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-gray-100" />
+              <DropdownMenuSeparator className="bg-border" />
+              {/* Theme toggle inside dropdown too */}
+              <DropdownMenuItem onClick={toggleTheme} className="gap-2 cursor-pointer text-foreground/80 focus:bg-secondary">
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {isDark ? 'Light mode' : 'Dark mode'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
                 onClick={() => void logout()}
-                className="text-red-500 cursor-pointer focus:bg-red-50 focus:text-red-600"
+                className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
@@ -364,31 +336,39 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
           {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="text-gray-600">
+              <Button variant="ghost" size="icon" className="text-foreground/70">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-white border-l border-gray-100">
+            <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-card border-l border-border">
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2 text-gray-900">
+                <SheetTitle className="flex items-center gap-2 text-card-foreground">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#235347] to-[#052659]">
                     <Zap className="h-4 w-4 text-white" />
                   </div>
                   SafariCharge
                 </SheetTitle>
-                <SheetDescription className="text-gray-500">
+                <SheetDescription className="text-muted-foreground">
                   Navigate the charging network
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-2">
-                {/* Home Button */}
+                {/* Theme toggle in mobile menu */}
+                <Button
+                  variant="outline"
+                  className="justify-start gap-3 h-11 border-border text-foreground/70"
+                  onClick={toggleTheme}
+                >
+                  {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  {isDark ? 'Light mode' : 'Dark mode'}
+                </Button>
+
+                <div className="h-px bg-border my-1" />
+
+                {/* Home */}
                 <Button
                   variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-                  className={`justify-start gap-3 h-11 ${
-                    activeTab === 'dashboard' 
-                      ? 'bg-gradient-to-r from-[#235347] to-[#052659] text-white' 
-                      : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-                  }`}
+                  className={`justify-start gap-3 h-11 ${activeTab === 'dashboard' ? activeNavCls : ghostNavCls}`}
                   onClick={() => handleNavClick('dashboard')}
                 >
                   <Home className="h-5 w-5" />
@@ -399,28 +379,19 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-to-r from-[#235347] to-[#052659] text-white' 
-                        : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeNavCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
                   </Button>
                 ))}
-                
-                {/* Premium Features */}
+
                 {premiumNavItems.map((item) => (
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-to-r from-[#052659] to-[#141E30] text-white' 
-                        : 'text-gray-600 hover:text-[#052659] hover:bg-[#f0f7f5]'
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activePremiumCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
@@ -430,17 +401,12 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                     </Badge>
                   </Button>
                 ))}
-                
-                {/* Fleet Management */}
+
                 {fleetNavItems.map((item) => (
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-to-r from-[#235347] to-[#8EB69B] text-white' 
-                        : 'text-gray-600 hover:text-[#235347] hover:bg-[#f0f7f5]'
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeFleetCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
@@ -450,38 +416,28 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
                     </Badge>
                   </Button>
                 ))}
-                
-                {/* Analytics - visible to ADMIN and EMPLOYEE */}
+
                 {analyticsNavItems.map((item) => (
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? 'default' : 'ghost'}
-                    className={`justify-start gap-3 h-11 ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white' 
-                        : 'text-gray-600 hover:text-[#5483B3] hover:bg-[#f0f7f5]'
-                    }`}
+                    className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                     onClick={() => handleNavClick(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
                   </Button>
                 ))}
-                
-                {/* Admin-only section */}
+
                 {isAdmin && (
                   <>
-                    <div className="h-px bg-gray-100 my-2" />
-                    <p className="text-xs font-medium text-gray-400 px-3">Admin Tools</p>
+                    <div className="h-px bg-border my-2" />
+                    <p className="text-xs font-medium text-muted-foreground px-3">Admin Tools</p>
                     {adminNavItems.map((item) => (
                       <Button
                         key={item.id}
                         variant={activeTab === item.id ? 'default' : 'ghost'}
-                        className={`justify-start gap-3 h-11 ${
-                          activeTab === item.id 
-                            ? 'bg-gradient-to-r from-[#5483B3] to-[#7DA0CA] text-white' 
-                            : 'text-gray-600 hover:text-[#5483B3] hover:bg-[#f0f7f5]'
-                        }`}
+                        className={`justify-start gap-3 h-11 ${activeTab === item.id ? activeAnalyticsCls : ghostNavCls}`}
                         onClick={() => handleNavClick(item.id)}
                       >
                         <item.icon className="h-5 w-5" />
