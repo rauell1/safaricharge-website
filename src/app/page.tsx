@@ -57,11 +57,11 @@ function AppFooter({
   onTabChange: (tab: AppTab) => void;
 }) {
   return (
-    <footer className="border-t border-gray-100 bg-white text-gray-600 mt-auto">
+    <footer className="border-t border-border bg-card text-muted-foreground mt-auto">
       <div className="w-full max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <h3 className="text-gray-900 text-sm font-semibold uppercase mb-4">Platform</h3>
+            <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Platform</h3>
             <ul className="space-y-2">
               <li><button onClick={() => onTabChange('map')} className="hover:text-[var(--primary)] transition-colors text-sm">Charging Map</button></li>
               <li><button onClick={() => canAccessBattery && onTabChange('battery')} className="hover:text-[var(--primary)] transition-colors text-sm">Battery Toolkit</button></li>
@@ -70,7 +70,7 @@ function AppFooter({
             </ul>
           </div>
           <div>
-            <h3 className="text-gray-900 text-sm font-semibold uppercase mb-4">Company</h3>
+            <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Company</h3>
             <ul className="space-y-2">
               <li><a href="#about" className="hover:text-[var(--primary)] transition-colors text-sm">About Us</a></li>
               <li><a href="#about" className="hover:text-[var(--primary)] transition-colors text-sm">Our Mission</a></li>
@@ -78,28 +78,28 @@ function AppFooter({
             </ul>
           </div>
           <div>
-            <h3 className="text-gray-900 text-sm font-semibold uppercase mb-4">Resources</h3>
+            <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Resources</h3>
             <ul className="space-y-2">
               <li><a href="#features" className="hover:text-[var(--primary)] transition-colors text-sm">Help Center</a></li>
               <li><a href="#features" className="hover:text-[var(--primary)] transition-colors text-sm">Partner Program</a></li>
             </ul>
           </div>
           <div>
-            <h3 className="text-gray-900 text-sm font-semibold uppercase mb-4">Contact</h3>
+            <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li>info@safaricharge.co.ke</li>
               <li>+254 700 000 000</li>
             </ul>
           </div>
         </div>
-        <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="pt-6 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-900">SafariCharge</span>
+            <span className="font-semibold text-card-foreground">SafariCharge</span>
           </div>
-          <p className="text-sm text-gray-500">© 2026 SafariCharge. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2026 SafariCharge. All rights reserved.</p>
         </div>
       </div>
     </footer>
@@ -120,9 +120,7 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
 
   const isTabAllowed = (tab: AppTab) => {
-    if (tab === 'dashboard' || tab === 'map' || tab === 'history') {
-      return true;
-    }
+    if (tab === 'dashboard' || tab === 'map' || tab === 'history') return true;
     if (tab === 'battery') return canAccessBattery;
     if (tab === 'fleet') return canAccessFleet;
     if (tab === 'analytics') return canAccessAnalytics;
@@ -153,14 +151,11 @@ export default function Home() {
     if (showLogin) {
       return <Login onBack={() => setShowLogin(false)} />;
     }
-
     return (
       <Landing
         onGetStarted={() => setShowLogin(true)}
         onNavigate={(tab) => {
-          if (tab === 'map' || tab === 'battery') {
-            setShowLogin(true);
-          }
+          if (tab === 'map' || tab === 'battery') setShowLogin(true);
         }}
       />
     );
@@ -174,7 +169,6 @@ export default function Home() {
           onTabChange={(tab) => handleTabChange(tab as AppTab)}
           onHome={() => handleTabChange('dashboard')}
         />
-
         <main className="flex-1 w-full max-w-[1600px] mx-auto py-6 px-4 sm:px-6 lg:px-8">
           {safeActiveTab === 'dashboard' && (
             <Dashboard onNavigate={(tab) => handleTabChange(tab as AppTab)} user={user} />
@@ -187,7 +181,6 @@ export default function Home() {
           {safeActiveTab === 'users' && isAdmin && <AdminUserManagement />}
           {safeActiveTab === 'employees' && isAdmin && <EmployeeApprovalDashboard />}
         </main>
-
         <AppFooter
           canAccessBattery={canAccessBattery}
           canAccessFleet={canAccessFleet}
