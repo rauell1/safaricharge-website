@@ -8,6 +8,7 @@ const rawEnvSchema = z.object({
   NEXT_PUBLIC_APP_VERSION: z.string().min(1).default('1.0.0'),
   MAIN_ADMIN_EMAIL: z.string().email().default('admin@example.com'),
   RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().email().default('noreply@rauell.systems'),
   CRON_SECRET: z.string().optional(),
   SESSION_SECRET: z.string().default('development-session-secret-change-me'),
   SESSION_COOKIE_NAME: z.string().min(1).default('safaricharge_session'),

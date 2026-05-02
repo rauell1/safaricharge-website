@@ -163,7 +163,7 @@ export async function sendTransactionalEmail(payload: EmailJobPayload) {
   }
 
   const { data, error } = await client.emails.send({
-    from: `${APP_CONFIG.name} <onboarding@resend.dev>`,
+    from: `${APP_CONFIG.name} <${env.RESEND_FROM_EMAIL}>`,
     to: Array.isArray(payload.to) ? payload.to : [payload.to],
     subject: email.subject,
     html: email.html,
