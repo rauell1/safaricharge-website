@@ -3,6 +3,30 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "next build",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "index, follow"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "safaricharge-website.vercel.app"
+        }
+      ],
+      "destination": "https://safaricharge.rauell.systems/$1",
+      "permanent": true
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron",
