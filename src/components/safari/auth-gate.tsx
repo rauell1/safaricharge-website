@@ -4,11 +4,7 @@
  * AuthGate — client component
  *
  * Owns ALL auth state, tab routing, and protected views.
- * The root page.tsx can be a Server Component that renders <Landing> directly,
- * while this component intercepts authenticated / loading states on the client.
- *
- * Why: Keeping 'use client' out of page.tsx allows Next.js to server-render
- * the public <Landing> component, making its content fully crawlable by Google.
+ * Renders <Landing> directly when unauthenticated (no props needed from server).
  */
 
 import { useEffect, useState } from 'react';
@@ -119,7 +115,7 @@ function AppFooter({
             </ul>
           </div>
 
-          {/* Company — real crawlable Next.js Links */}
+          {/* Company */}
           <div>
             <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Company</h3>
             <ul className="space-y-2">
@@ -141,39 +137,27 @@ function AppFooter({
             </ul>
           </div>
 
-          {/* Resources — real crawlable Next.js Links */}
+          {/* Resources */}
           <div>
             <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Resources</h3>
             <ul className="space-y-2">
               <li>
-                <Link
-                  href="/features"
-                  className="hover:text-[var(--primary)] transition-colors text-sm"
-                >
+                <Link href="/features" className="hover:text-[var(--primary)] transition-colors text-sm">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/features"
-                  className="hover:text-[var(--primary)] transition-colors text-sm"
-                >
+                <Link href="/features" className="hover:text-[var(--primary)] transition-colors text-sm">
                   Partner Program
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/blog"
-                  className="hover:text-[var(--primary)] transition-colors text-sm"
-                >
+                <Link href="/blog" className="hover:text-[var(--primary)] transition-colors text-sm">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/map"
-                  className="hover:text-[var(--primary)] transition-colors text-sm"
-                >
+                <Link href="/map" className="hover:text-[var(--primary)] transition-colors text-sm">
                   Find a Station
                 </Link>
               </li>
@@ -185,18 +169,12 @@ function AppFooter({
             <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a
-                  href="mailto:info@safaricharge.co.ke"
-                  className="hover:text-[var(--primary)] transition-colors"
-                >
+                <a href="mailto:info@safaricharge.co.ke" className="hover:text-[var(--primary)] transition-colors">
                   info@safaricharge.co.ke
                 </a>
               </li>
               <li>
-                <a
-                  href="tel:+254700000000"
-                  className="hover:text-[var(--primary)] transition-colors"
-                >
+                <a href="tel:+254700000000" className="hover:text-[var(--primary)] transition-colors">
                   +254 700 000 000
                 </a>
               </li>
@@ -212,18 +190,10 @@ function AppFooter({
             <span className="font-semibold text-card-foreground">SafariCharge</span>
           </div>
           <nav aria-label="Footer navigation" className="flex gap-4 text-xs text-muted-foreground">
-            <Link href="/about" className="hover:text-[var(--primary)] transition-colors">
-              About
-            </Link>
-            <Link href="/features" className="hover:text-[var(--primary)] transition-colors">
-              Features
-            </Link>
-            <Link href="/map" className="hover:text-[var(--primary)] transition-colors">
-              Map
-            </Link>
-            <Link href="/blog" className="hover:text-[var(--primary)] transition-colors">
-              Blog
-            </Link>
+            <Link href="/about" className="hover:text-[var(--primary)] transition-colors">About</Link>
+            <Link href="/features" className="hover:text-[var(--primary)] transition-colors">Features</Link>
+            <Link href="/map" className="hover:text-[var(--primary)] transition-colors">Map</Link>
+            <Link href="/blog" className="hover:text-[var(--primary)] transition-colors">Blog</Link>
           </nav>
           <p className="text-sm text-muted-foreground">© 2026 SafariCharge. All rights reserved.</p>
         </div>
@@ -234,15 +204,13 @@ function AppFooter({
 
 /**
  * AuthGate — mounts on the client, checks auth, and renders:
- *   - null (nothing) while loading, so the server-rendered <Landing> stays visible
+ *   - null while mounting (prevents hydration mismatch)
+ *   - <LoadingScreen> while auth initialises
+ *   - <Landing> with interactive handlers when unauthenticated
  *   - <Login> overlay when the user clicks "Get Started"
  *   - Full authenticated app shell once logged in
- *
- * The server-rendered <Landing> (passed as `fallback`) is shown during the
- * initial load. Once auth resolves as authenticated, AuthGate replaces it
- * with the protected app. If unauthenticated, the Landing is kept visible.
  */
-export function AuthGate({ fallback }: { fallback: React.ReactNode }) {
+export function AuthGate() {
   const initializeAuth = useAuthStore((state) => state.initialize);
   const authStatus = useAuthStatus();
   const user = useUser();
@@ -261,7 +229,7 @@ export function AuthGate({ fallback }: { fallback: React.ReactNode }) {
     void initializeAuth();
   }, [initializeAuth]);
 
-  // Before client hydration, render nothing so the server HTML (Landing) stays.
+  // Before client hydration, render nothing to avoid hydration mismatch.
   if (!mounted) return null;
 
   const isTabAllowed = (tab: AppTab) => {
@@ -280,17 +248,14 @@ export function AuthGate({ fallback }: { fallback: React.ReactNode }) {
     setActiveTab(isTabAllowed(tab) ? tab : 'dashboard');
   };
 
-  // Still checking auth — show a non-intrusive loader that overlays the Landing
   if (authStatus === 'loading') {
     return <LoadingScreen />;
   }
 
-  // Not logged in — show Landing (fallback) or Login overlay
   if (authStatus === 'unauthenticated') {
     if (showLogin) {
       return <Login onBack={() => setShowLogin(false)} />;
     }
-    // Replace the server-rendered fallback with the interactive version
     return (
       <Landing
         onGetStarted={() => setShowLogin(true)}
@@ -301,7 +266,6 @@ export function AuthGate({ fallback }: { fallback: React.ReactNode }) {
     );
   }
 
-  // Authenticated — render the full app shell
   return (
     <CurrencyProvider>
       <div className="min-h-screen flex flex-col bg-background">
