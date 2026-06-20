@@ -64,6 +64,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'map', label: 'Charging Map', icon: MapPin },
+    { id: 'energy', label: 'Energy', icon: Sun },
   ];
 
   const premiumNavItems = canAccessBattery

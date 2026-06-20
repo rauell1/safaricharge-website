@@ -22,6 +22,7 @@ import { BatteryRepurposing } from '@/components/safari/battery-repurposing';
 import { Landing } from '@/components/safari/landing';
 import { Dashboard } from '@/components/safari/dashboard';
 import { FleetManagement } from '@/components/safari/fleet-management';
+import { EnergyTab } from '@/components/safari/energy-tab';
 import { mockStations } from '@/data/mock-data';
 import {
   useAuthStatus,
@@ -43,7 +44,8 @@ type AppTab =
   | 'fleet'
   | 'analytics'
   | 'users'
-  | 'employees';
+  | 'employees'
+  | 'energy';
 
 function LoadingScreen() {
   return (
@@ -86,6 +88,14 @@ function AppFooter({
                   className="hover:text-[var(--primary)] transition-colors text-sm"
                 >
                   Charging Map
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onTabChange('energy')}
+                  className="hover:text-[var(--primary)] transition-colors text-sm"
+                >
+                  Energy & Solar
                 </button>
               </li>
               <li>
@@ -233,7 +243,7 @@ export function AuthGate() {
   if (!mounted) return null;
 
   const isTabAllowed = (tab: AppTab) => {
-    if (tab === 'dashboard' || tab === 'map' || tab === 'history') return true;
+    if (tab === 'dashboard' || tab === 'map' || tab === 'history' || tab === 'energy') return true;
     if (tab === 'battery') return canAccessBattery;
     if (tab === 'fleet') return canAccessFleet;
     if (tab === 'analytics') return canAccessAnalytics;
@@ -287,6 +297,7 @@ export function AuthGate() {
           {safeActiveTab === 'analytics' && canAccessAnalytics && <AIAnalyticsDashboard />}
           {safeActiveTab === 'users' && isAdmin && <AdminUserManagement />}
           {safeActiveTab === 'employees' && isAdmin && <EmployeeApprovalDashboard />}
+          {safeActiveTab === 'energy' && <EnergyTab />}
         </main>
         <AppFooter
           canAccessBattery={canAccessBattery}
