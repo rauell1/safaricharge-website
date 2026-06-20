@@ -914,6 +914,35 @@ export function Landing({ onGetStarted }: LandingProps) {
         </div>
       </section>
 
+      {/* Energy Division Banner */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#051F20] border-t border-white/10">
+        <div className="w-full max-w-[1600px] mx-auto">
+          <div className="rounded-2xl bg-gradient-to-r from-[#235347]/20 to-[#052659]/20 border border-[#235347]/30 p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#235347] to-[#052659] shrink-0 shadow-lg">
+                <Sun className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-white font-bold text-lg">SafariCharge Energy</span>
+                  <span className="bg-[#235347] text-[#8EB69B] text-[10px] font-bold px-2 py-0.5 rounded-full tracking-widest uppercase">New</span>
+                </div>
+                <p className="text-white/60 text-sm max-w-md">
+                  Solar panels, hybrid inverters &amp; battery storage for African homes and businesses — fully integrated with our EV charging ecosystem.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/energy"
+              className="shrink-0 inline-flex items-center gap-2 bg-[#235347] hover:bg-[#2d6b5c] text-white font-bold px-7 py-3.5 rounded-full text-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
+            >
+              <Sun className="h-4 w-4" />
+              Explore Solar Solutions
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-[#051F20] text-gray-400 py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-[1600px] mx-auto">
@@ -925,6 +954,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 <li><button onClick={() => handleLearnMore('battery-toolkit')} className="hover:text-white transition-colors text-sm">Battery Toolkit</button></li>
                 <li><button onClick={() => handleLearnMore('energy-intelligence')} className="hover:text-white transition-colors text-sm">Analytics</button></li>
                 <li><button onClick={() => handleLearnMore('sustainability')} className="hover:text-white transition-colors text-sm">Sustainability</button></li>
+                <li><a href="/energy" className="hover:text-white transition-colors text-sm flex items-center gap-1">☀️ Energy &amp; Solar</a></li>
               </ul>
             </div>
             <div>
