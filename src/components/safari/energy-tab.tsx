@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -105,7 +105,7 @@ function SolarCalculator() {
           </div>
         ))}
         <a
-          href="mailto:energy@safaricharge.co.ke?subject=Solar Quote Request"
+          href="mailto:info@rauell.systems?subject=Solar Quote Request"
           className="inline-flex items-center gap-2 bg-[#235347] hover:bg-[#163832] text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all hover:-translate-y-0.5"
         >
           Get a Real Quote <ArrowRight className="h-4 w-4" />
@@ -176,7 +176,7 @@ function ContactForm() {
       <textarea name="message" value={form.message} onChange={handleChange} rows={4} placeholder="Tell us about your energy needs..." required
         className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
       {status === 'error' && (
-        <p className="text-destructive text-xs">Something went wrong — email us at energy@safaricharge.co.ke</p>
+        <p className="text-destructive text-xs">Something went wrong — email us at info@rauell.systems</p>
       )}
       <button type="submit" disabled={status === 'sending'}
         className="w-full bg-[#235347] hover:bg-[#163832] disabled:opacity-60 text-white font-bold py-3 rounded-full text-sm transition-all">
@@ -326,7 +326,7 @@ export function EnergyTab() {
                         </li>
                       ))}
                     </ul>
-                    <a href="mailto:energy@safaricharge.co.ke?subject=Product Enquiry"
+                    <a href="mailto:info@rauell.systems?subject=Product Enquiry"
                       className="inline-flex items-center gap-2 bg-[#235347] hover:bg-[#2d6b5c] text-white text-sm font-bold px-5 py-2.5 rounded-full transition-all hover:-translate-y-0.5">
                       Get Pricing <ArrowRight className="h-3.5 w-3.5" />
                     </a>
@@ -336,7 +336,7 @@ export function EnergyTab() {
             </div>
 
             <div className="text-center mt-12">
-              <a href="mailto:energy@safaricharge.co.ke?subject=Full System Quote"
+              <a href="mailto:info@rauell.systems?subject=Full System Quote"
                 className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 text-white font-bold px-7 py-3 rounded-full text-sm transition-all hover:-translate-y-0.5">
                 Build Your System & Get a Quote <ArrowRight className="h-4 w-4" />
               </a>
@@ -466,7 +466,7 @@ export function EnergyTab() {
               <div className="space-y-5">
                 {[
                   { icon: MapPin, title: 'Our Office', text: 'National Park East Gate Rd, Nairobi' },
-                  { icon: Mail, title: 'Email Us', text: 'energy@safaricharge.co.ke', href: 'mailto:energy@safaricharge.co.ke' },
+                  { icon: Mail, title: 'Email Us', text: 'info@rauell.systems', href: 'mailto:info@rauell.systems' },
                   { icon: Phone, title: 'Call Us', text: '+254 704 612 435', href: 'tel:+254704612435' },
                   { icon: MessageCircle, title: 'WhatsApp', text: 'Chat with us directly', href: 'https://wa.me/254704612435' },
                   { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM – 5PM EAT' },

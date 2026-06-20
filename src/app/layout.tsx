@@ -99,7 +99,7 @@ const jsonLd = {
       },
       contactPoint: {
         '@type': 'ContactPoint',
-        email: 'info@safaricharge.co.ke',
+        email: 'info@rauell.systems',
         telephone: '+254700000000',
         contactType: 'customer service',
         areaServed: 'KE',

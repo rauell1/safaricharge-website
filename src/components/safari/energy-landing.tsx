@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -154,7 +154,7 @@ function SolarCalculator() {
           />
         </div>
         <a
-          href="mailto:energy@safaricharge.co.ke?subject=Solar Quote Request"
+          href="mailto:info@rauell.systems?subject=Solar Quote Request"
           className="inline-flex items-center gap-2 bg-[#235347] hover:bg-[#163832] text-white font-bold px-6 py-3 rounded-full transition-all hover:-translate-y-0.5 text-sm"
         >
           Get a Real Quote <ArrowRight className="h-4 w-4" />
@@ -493,7 +493,7 @@ export function EnergyLanding() {
                     ))}
                   </ul>
                   <a
-                    href="mailto:energy@safaricharge.co.ke?subject=Product Enquiry"
+                    href="mailto:info@rauell.systems?subject=Product Enquiry"
                     className="inline-flex items-center gap-2 bg-[#235347] hover:bg-[#2d6b5c] text-white text-sm font-bold px-6 py-3 rounded-full transition-all hover:-translate-y-0.5"
                   >
                     Get Pricing <ArrowRight className="h-4 w-4" />
@@ -505,7 +505,7 @@ export function EnergyLanding() {
 
           <div className="text-center mt-16">
             <a
-              href="mailto:energy@safaricharge.co.ke?subject=Full System Quote"
+              href="mailto:info@rauell.systems?subject=Full System Quote"
               className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 text-white font-bold px-8 py-4 rounded-full transition-all hover:-translate-y-0.5 text-sm"
             >
               Build Your System & Get a Quote <ArrowRight className="h-4 w-4" />
@@ -749,7 +749,7 @@ export function EnergyLanding() {
             <div className="space-y-6">
               {[
                 { icon: MapPin, title: 'Our Office', text: 'National Park East Gate Rd, Nairobi' },
-                { icon: Mail, title: 'Email Us', text: 'energy@safaricharge.co.ke', href: 'mailto:energy@safaricharge.co.ke' },
+                { icon: Mail, title: 'Email Us', text: 'info@rauell.systems', href: 'mailto:info@rauell.systems' },
                 { icon: Phone, title: 'Call Us', text: '+254 704 612 435', href: 'tel:+254704612435' },
                 { icon: MessageCircle, title: 'WhatsApp', text: 'Chat with us directly', href: 'https://wa.me/254704612435' },
                 { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM – 5PM EAT' },
@@ -935,7 +935,7 @@ function ContactForm() {
         className="w-full rounded-xl border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none"
       />
       {status === 'error' && (
-        <p className="text-destructive text-sm">Something went wrong. Please email us directly at energy@safaricharge.co.ke</p>
+        <p className="text-destructive text-sm">Something went wrong. Please email us directly at info@rauell.systems</p>
       )}
       <button
         type="submit"

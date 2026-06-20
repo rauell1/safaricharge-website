@@ -977,7 +977,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               <h3 className="text-white text-sm font-semibold uppercase mb-4">Contact</h3>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
-                  <span>📧</span> info@safaricharge.co.ke
+                  <span>📧</span> info@rauell.systems
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📞</span> +254 700 000 000

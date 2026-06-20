@@ -179,8 +179,8 @@ function AppFooter({
             <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="mailto:info@safaricharge.co.ke" className="hover:text-[var(--primary)] transition-colors">
-                  info@safaricharge.co.ke
+                <a href="mailto:info@rauell.systems" className="hover:text-[var(--primary)] transition-colors">
+                  info@rauell.systems
                 </a>
               </li>
               <li>
