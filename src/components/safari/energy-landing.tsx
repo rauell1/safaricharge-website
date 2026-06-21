@@ -102,7 +102,7 @@ function SolarCalculator() {
   const annualSavings = Math.min(bill * 12 * savingsRatio, annualGeneration * 18);
   const monthlySavings = Math.round(annualSavings / 12);
   const systemCost = size * systemCostPerKwp + battery * batteryCostPerKwh;
-  const payback = annualSavings > 0 ? (systemCost / annualSavings).toFixed(1) : '—';
+  const payback = annualSavings > 0 ? (systemCost / annualSavings).toFixed(1) : 'N/A';
   const co2 = Math.round(annualGeneration * co2PerKwh);
 
   return (
@@ -321,7 +321,7 @@ export function EnergyLanding() {
             </span>
           </h1>
           <p className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Premium solar panels, hybrid inverters, and lithium battery storage — engineered for Africa&apos;s homes, businesses, and communities. Integrated with SafariCharge&apos;s EV charging ecosystem.
+            Premium solar panels, hybrid inverters, and lithium battery storage, engineered for Africa&apos;s homes, businesses, and communities. Integrated with SafariCharge&apos;s EV charging ecosystem.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
@@ -376,7 +376,7 @@ export function EnergyLanding() {
               Integrated Energy Solutions<br className="hidden sm:block" /> for the African Market
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-base leading-relaxed">
-              Energy and mobility go hand in hand. SafariCharge Energy delivers scalable, reliable solar solutions that work seamlessly with our EV charging ecosystem — from powering your home EV charger to large commercial operations.
+              Energy and mobility go hand in hand. SafariCharge Energy delivers scalable, reliable solar solutions that work seamlessly with our EV charging ecosystem, from powering your home EV charger to large commercial operations.
             </p>
           </div>
 
@@ -385,7 +385,7 @@ export function EnergyLanding() {
               {
                 icon: Sun,
                 title: 'Cutting-Edge Technology',
-                desc: 'N-Type TOPCon bifacial panels, hybrid inverters with built-in MPPT, and LiFePO₄ battery chemistry — the best components available.',
+                desc: 'N-Type TOPCon bifacial panels, hybrid inverters with built-in MPPT, and LiFePO4 battery chemistry, the best components available.',
               },
               {
                 icon: Leaf,
@@ -420,7 +420,7 @@ export function EnergyLanding() {
             <p className="text-xs font-bold tracking-widest uppercase text-[#8EB69B] mb-3">Our Products</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">Premium Solar Components</h2>
             <p className="text-white/60 max-w-xl mx-auto text-base">
-              High-quality panels, inverters, and batteries — the building blocks of every SafariCharge Energy system.
+              High-quality panels, inverters, and batteries: the building blocks of every SafariCharge Energy system.
             </p>
           </div>
 
@@ -521,7 +521,7 @@ export function EnergyLanding() {
             <p className="text-xs font-bold tracking-widest uppercase text-primary mb-3">Our Work</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-4">Reference Projects</h2>
             <p className="text-muted-foreground max-w-xl mx-auto text-base">
-              From Nairobi rooftops to off-grid camps deep in the Maasai Mara — see how we power businesses and communities across Kenya.
+              From Nairobi rooftops to off-grid camps deep in the Maasai Mara. See how we power businesses and communities across Kenya.
             </p>
           </div>
 
@@ -624,7 +624,7 @@ export function EnergyLanding() {
               },
               {
                 quote:
-                  '"No more generator noise — just clean, reliable power that impresses our guests and protects the environment."',
+                  '"No more generator noise. Just clean, reliable power that impresses our guests and protects the environment."',
                 name: 'Loic Amado',
                 role: 'Camp Manager, Emboo River',
               },
@@ -687,13 +687,13 @@ export function EnergyLanding() {
               <p className="mt-2">We provide a detailed timeline during the design approval stage.</p>
             </FaqItem>
             <FaqItem question="Do solar panels require maintenance?">
-              Solar systems are low-maintenance. We recommend panel cleaning 2–4 times per year, a visual inspection every 6 months, and a professional system check every 2–3 years. We offer affordable maintenance packages.
+              Solar systems are low-maintenance. We recommend panel cleaning 2-4 times per year, a visual inspection every 6 months, and a professional system check every 2-3 years. We offer affordable maintenance packages.
             </FaqItem>
             <FaqItem question="Can I go completely off-grid?">
               Yes. With correct sizing and sufficient battery storage you can achieve full energy independence. Our team will assess your load profile, peak demand, and location to design a system that covers night-time and cloudy days.
             </FaqItem>
             <FaqItem question="Can I charge my EV with my solar system?">
-              Absolutely — that&apos;s what makes SafariCharge Energy unique. Your solar installation can power a home or commercial EV charger, and we will design the system to handle both household loads and vehicle charging simultaneously.
+              Absolutely. That&apos;s what makes SafariCharge Energy unique. Your solar installation can power a home or commercial EV charger, and we will design the system to handle both household loads and vehicle charging simultaneously.
             </FaqItem>
           </div>
         </div>
@@ -752,7 +752,7 @@ export function EnergyLanding() {
                 { icon: Mail, title: 'Email Us', text: 'info@rauell.systems', href: 'mailto:info@rauell.systems' },
                 { icon: Phone, title: 'Call Us', text: '+254 704 612 435', href: 'tel:+254704612435' },
                 { icon: MessageCircle, title: 'WhatsApp', text: 'Chat with us directly', href: 'https://wa.me/254704612435' },
-                { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM – 5PM EAT' },
+                { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM - 5PM EAT' },
               ].map((item) => (
                 <div key={item.title} className="flex items-start gap-4">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#235347]/15 to-[#052659]/15 shrink-0">
@@ -875,7 +875,7 @@ function ContactForm() {
       const res = await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, subject: 'SafariCharge Energy — New Enquiry' }),
+        body: JSON.stringify({ ...form, subject: 'SafariCharge Energy: New Enquiry' }),
       });
       setStatus(res.ok ? 'sent' : 'error');
     } catch {
@@ -947,3 +947,4 @@ function ContactForm() {
     </form>
   );
 }
+

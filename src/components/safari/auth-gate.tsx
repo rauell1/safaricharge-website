@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 /**
- * AuthGate — client component
+ * AuthGate: client component
  *
  * Owns ALL auth state, tab routing, and protected views.
  * Renders <Landing> directly when unauthenticated (no props needed from server).
@@ -78,7 +78,7 @@ function AppFooter({
     <footer className="border-t border-border bg-card text-muted-foreground mt-auto">
       <div className="w-full max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-          {/* Platform — tab buttons for authenticated users */}
+          {/* Platform: tab buttons for authenticated users */}
           <div>
             <h3 className="text-card-foreground text-sm font-semibold uppercase mb-4">Platform</h3>
             <ul className="space-y-2">
@@ -213,7 +213,7 @@ function AppFooter({
 }
 
 /**
- * AuthGate — mounts on the client, checks auth, and renders:
+ * AuthGate: mounts on the client, checks auth, and renders:
  *   - null while mounting (prevents hydration mismatch)
  *   - <LoadingScreen> while auth initialises
  *   - <Landing> with interactive handlers when unauthenticated
@@ -309,3 +309,4 @@ export function AuthGate() {
     </CurrencyProvider>
   );
 }
+

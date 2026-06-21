@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'SafariCharge Energy | Solar Panels, Inverters & Battery Storage',
     description:
-      'Premium solar solutions for African homes and businesses — integrated with the SafariCharge EV charging ecosystem.',
+      'Premium solar solutions for African homes and businesses, integrated with the SafariCharge EV charging ecosystem.',
     url: 'https://safaricharge.rauell.systems/energy',
   },
 };

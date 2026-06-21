@@ -77,7 +77,7 @@ function SolarCalculator() {
   const annualSavings = Math.min(bill * 12 * 0.75, annualGeneration * 18);
   const monthlySavings = Math.round(annualSavings / 12);
   const systemCost = size * 185000 + battery * 25000;
-  const payback = annualSavings > 0 ? (systemCost / annualSavings).toFixed(1) : '—';
+  const payback = annualSavings > 0 ? (systemCost / annualSavings).toFixed(1) : 'N/A';
   const co2 = Math.round(annualGeneration * 0.55);
 
   return (
@@ -144,7 +144,7 @@ function ContactForm() {
       const res = await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, subject: 'SafariCharge Energy — New Enquiry' }),
+        body: JSON.stringify({ ...form, subject: 'SafariCharge Energy: New Enquiry' }),
       });
       setStatus(res.ok ? 'sent' : 'error');
     } catch {
@@ -176,7 +176,7 @@ function ContactForm() {
       <textarea name="message" value={form.message} onChange={handleChange} rows={4} placeholder="Tell us about your energy needs..." required
         className="w-full rounded-xl border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
       {status === 'error' && (
-        <p className="text-destructive text-xs">Something went wrong — email us at info@rauell.systems</p>
+        <p className="text-destructive text-xs">Something went wrong. Email us at info@rauell.systems</p>
       )}
       <button type="submit" disabled={status === 'sending'}
         className="w-full bg-[#235347] hover:bg-[#163832] disabled:opacity-60 text-white font-bold py-3 rounded-full text-sm transition-all">
@@ -212,7 +212,7 @@ export function EnergyTab() {
             </span>
           </h1>
           <p className="text-base text-white/70 max-w-xl mx-auto mb-8 leading-relaxed">
-            Premium solar panels, hybrid inverters, and lithium battery storage — engineered for Africa's homes, businesses, and communities. Fully integrated with your SafariCharge EV ecosystem.
+            Premium solar panels, hybrid inverters, and lithium battery storage, engineered for Africa's homes, businesses, and communities. Fully integrated with your SafariCharge EV ecosystem.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a href="#energy-products"
@@ -259,12 +259,12 @@ export function EnergyTab() {
                 Integrated Energy Solutions for Africa
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto text-sm leading-relaxed">
-                Energy and mobility go hand in hand. SafariCharge Energy delivers scalable, reliable solar solutions that work seamlessly with our EV charging network — from powering your home charger to large commercial operations.
+                Energy and mobility go hand in hand. SafariCharge Energy delivers scalable, reliable solar solutions that work seamlessly with our EV charging network, from powering your home charger to large commercial operations.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-5">
               {[
-                { icon: Sun, title: 'Cutting-Edge Technology', desc: 'N-Type TOPCon bifacial panels, hybrid inverters with built-in MPPT, and LiFePO₄ battery chemistry — the best components available.' },
+                { icon: Sun, title: 'Cutting-Edge Technology', desc: 'N-Type TOPCon bifacial panels, hybrid inverters with built-in MPPT, and LiFePO4 battery chemistry, the best components available.' },
                 { icon: Leaf, title: 'Built for Africa', desc: 'Designed for equatorial sun, high ambient temperatures, and off-grid reliability. Every system is sized for your specific site.' },
                 { icon: Zap, title: 'EV-Ready Integration', desc: "Pairs natively with SafariCharge's EV charging infrastructure and fleet management software for a complete clean-energy ecosystem." },
               ].map((p) => (
@@ -286,7 +286,7 @@ export function EnergyTab() {
             <div className="text-center mb-10">
               <p className="text-xs font-bold tracking-widest uppercase text-[#8EB69B] mb-2">Our Products</p>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Premium Solar Components</h2>
-              <p className="text-white/60 max-w-lg mx-auto text-sm">High-quality panels, inverters, and batteries — the building blocks of every SafariCharge Energy system.</p>
+              <p className="text-white/60 max-w-lg mx-auto text-sm">High-quality panels, inverters, and batteries: the building blocks of every SafariCharge Energy system.</p>
             </div>
 
             <div className="space-y-10">
@@ -394,7 +394,7 @@ export function EnergyTab() {
             <div className="grid md:grid-cols-3 gap-5">
               {[
                 { quote: '"Energy bills dropped by 60% and zero downtime since installation. The ROI has been exceptional."', name: 'James Mwangi', role: 'CEO, Carton Manufacturers' },
-                { quote: '"No more generator noise — just clean, reliable power that impresses our guests and protects the environment."', name: 'Loic Amado', role: 'Camp Manager, Emboo River' },
+                { quote: '"No more generator noise. Just clean, reliable power that impresses our guests and protects the environment."', name: 'Loic Amado', role: 'Camp Manager, Emboo River' },
                 { quote: '"Our health clinic now operates 24/7. Critical equipment never loses power. Patient outcomes have measurably improved."', name: 'Dr. Peter Omondi', role: 'Medical Director, Rural Health Clinic' },
               ].map((t) => (
                 <div key={t.name} className="rounded-2xl bg-white/5 border border-white/10 p-6 hover:border-[#8EB69B]/30 transition-all">
@@ -434,10 +434,10 @@ export function EnergyTab() {
                   </ul>
                 </FaqItem>
                 <FaqItem question="How long does installation take?">
-                  Residential: 1–3 days. Commercial: 1–6 weeks. Large-scale: 4–12 weeks.
+                  Residential: 1-3 days. Commercial: 1-6 weeks. Large-scale: 4-12 weeks.
                 </FaqItem>
                 <FaqItem question="Can I charge my EV with solar?">
-                  Yes — that's what makes SafariCharge Energy unique. Your solar installation can power a home or commercial EV charger, and we design the system to handle both loads simultaneously.
+                  Yes. That's what makes SafariCharge Energy unique. Your solar installation can power a home or commercial EV charger, and we design the system to handle both loads simultaneously.
                 </FaqItem>
                 <FaqItem question="Can I go completely off-grid?">
                   Yes. With correct sizing and sufficient battery storage you can achieve full energy independence.
@@ -469,7 +469,7 @@ export function EnergyTab() {
                   { icon: Mail, title: 'Email Us', text: 'info@rauell.systems', href: 'mailto:info@rauell.systems' },
                   { icon: Phone, title: 'Call Us', text: '+254 704 612 435', href: 'tel:+254704612435' },
                   { icon: MessageCircle, title: 'WhatsApp', text: 'Chat with us directly', href: 'https://wa.me/254704612435' },
-                  { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM – 5PM EAT' },
+                  { icon: Clock, title: 'Hours', text: 'Monday to Friday: 9AM - 5PM EAT' },
                 ].map((item) => (
                   <div key={item.title} className="flex items-start gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#235347]/15 to-[#052659]/15 shrink-0">
@@ -504,3 +504,4 @@ export function EnergyTab() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -55,7 +55,7 @@ const featureDetails: Record<string, FeatureDetail> = {
     features: [
       { title: 'Real-time Availability', description: 'See which chargers are available before you arrive with live status updates', icon: Activity },
       { title: 'Multi-connector Support', description: 'CCS2, CHAdeMO, Type 2, and Tesla connectors available at various locations', icon: Plug },
-      { title: 'High-Speed Charging', description: 'Up to 350 kW DC fast charging for rapid top-ups in 15–30 minutes', icon: Zap },
+      { title: 'High-Speed Charging', description: 'Up to 350 kW DC fast charging for rapid top-ups in 15-30 minutes', icon: Zap },
       { title: 'Smart Routing', description: 'Get directions with distance, duration, and traffic conditions', icon: MapPin },
     ],
     stats: [
@@ -89,7 +89,7 @@ const featureDetails: Record<string, FeatureDetail> = {
       { value: '2,450+', label: 'Batteries Processed' },
       { value: '185 M', label: 'kWh Repurposed' },
       { value: '85%', label: 'Material Recovery' },
-      { value: '8–10 yr', label: 'Extended Life' },
+      { value: '8-10 yr', label: 'Extended Life' },
     ],
     benefits: [
       'Environmental impact certification',
@@ -171,7 +171,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       num: '01',
       icon: MapPin,
       title: 'Charging Network',
-      description: "Kenya's largest EV charging network with 254+ points across 11 counties — real-time availability included.",
+      description: "Kenya's largest EV charging network with 254+ points across 11 counties with real-time availability included.",
       color: 'from-[#235347] to-[#163832]',
     },
     {
@@ -212,7 +212,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       num: '01',
       icon: Shield,
       title: 'Create your account',
-      description: 'Sign up in under two minutes. Choose a plan that fits — individual driver, business fleet, or energy partner.',
+      description: 'Sign up in under two minutes. Choose a plan that fits: individual driver, business fleet, or energy partner.',
     },
     {
       num: '02',
@@ -327,7 +327,7 @@ export function Landing({ onGetStarted }: LandingProps) {
 
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-16 items-center">
 
-          {/* LEFT — copy */}
+          {/* LEFT: copy */}
           <motion.div
             initial="hidden"
             animate="show"
@@ -359,7 +359,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               className="text-lg text-white/60 leading-relaxed mb-9 max-w-xl"
             >
               Find charging stations, manage fleet energy, repurpose EV batteries, and track your
-              carbon footprint — all in one intelligent platform powering East Africa's electric
+              carbon footprint, all in one intelligent platform powering East Africa's electric
               mobility revolution.
             </motion.p>
 
@@ -397,7 +397,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT — live status panel */}
+          {/* RIGHT: live status panel */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -531,7 +531,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               A Complete Clean-Mobility Ecosystem
             </motion.h2>
             <motion.p variants={fadeUp} className="text-gray-500 max-w-2xl mx-auto text-lg">
-              From charging infrastructure to battery repurposing and AI analytics — every tool you
+              From charging infrastructure to battery repurposing and AI analytics. Every tool you
               need to lead Africa's electric transition.
             </motion.p>
           </motion.div>
@@ -587,7 +587,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 Charging Infrastructure<br />Across Kenya
               </h2>
               <p className="text-gray-500 text-lg leading-relaxed mb-8">
-                From Nairobi to Eldoret, Mombasa to Kisumu — SafariCharge stations are positioned
+                From Nairobi to Eldoret, Mombasa to Kisumu. SafariCharge stations are positioned
                 at hotels, malls, petrol stations, and business parks across 11 counties.
               </p>
               <div className="space-y-3 mb-9">
@@ -699,7 +699,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               Up and Running in Minutes
             </motion.h2>
             <motion.p variants={fadeUp} className="text-gray-500 max-w-xl mx-auto text-lg">
-              Three simple steps from sign-up to your first charge — no complex setup required.
+              Three simple steps from sign-up to your first charge, no complex setup required.
             </motion.p>
           </motion.div>
 
@@ -815,11 +815,11 @@ export function Landing({ onGetStarted }: LandingProps) {
               <p className="text-gray-500 text-lg leading-relaxed mb-5">
                 SafariCharge is building the digital and physical backbone for East Africa's clean-mobility
                 transition. Our platform connects electric vehicles with reliable charging points, intelligent
-                routing, and distributed energy systems — including solar and second-life battery storage.
+                routing, and distributed energy systems including solar and second-life battery storage.
               </p>
               <p className="text-gray-500 leading-relaxed mb-9">
                 We exist to make clean mobility accessible, affordable, and resilient for drivers, businesses,
-                and communities — from major cities to rural locations where energy access is limited.
+                and communities, from major cities to rural locations where energy access is limited.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {[
@@ -846,7 +846,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               className="space-y-5"
             >
               {[
-                { title: 'Founded in Nairobi', desc: 'Built for African roads, climate, and business realities — by a team that understands the continent.', icon: MapPin },
+                { title: 'Founded in Nairobi', desc: 'Built for African roads, climate, and business realities, built by a team that understands the continent.', icon: MapPin },
                 { title: 'Pan-African Vision', desc: 'Starting with Kenya, expanding to East Africa with a roadmap into West and Southern Africa.', icon: Zap },
                 { title: 'Backed by Clean Energy', desc: 'Our charging network is progressively integrated with solar and second-life battery storage.', icon: Sun },
               ].map((item, i) => (
@@ -879,7 +879,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                   <Badge className="bg-[#235347] text-[#8EB69B] border-0 text-[10px] font-bold uppercase tracking-widest">New</Badge>
                 </div>
                 <p className="text-white/50 max-w-lg leading-relaxed">
-                  Solar panels, hybrid inverters, and battery storage for African homes and businesses —
+                  Solar panels, hybrid inverters, and battery storage for African homes and businesses,
                   fully integrated with our EV charging ecosystem.
                 </p>
                 <div className="flex flex-wrap gap-4 mt-5">
@@ -961,7 +961,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 <span className="text-white font-extrabold text-lg">SafariCharge</span>
               </div>
               <p className="text-sm leading-relaxed mb-5 max-w-xs">
-                Building the backbone for East Africa's clean-mobility transition — charging
+                Building the backbone for East Africa's clean-mobility transition:
                 networks, battery repurposing, and solar energy in one platform.
               </p>
               <div className="space-y-2 text-sm">
@@ -1126,3 +1126,4 @@ export function Landing({ onGetStarted }: LandingProps) {
     </div>
   );
 }
+

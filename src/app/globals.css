@@ -45,7 +45,7 @@
 }
 
 /* ============================================
-   LIGHT MODE — Clean Teal / White
+   LIGHT MODE: Clean Teal / White
    ============================================ */
 :root {
   --radius: 0.625rem;
@@ -94,7 +94,7 @@
 }
 
 /* ============================================
-   DARK MODE — Deep Forest Green
+   DARK MODE: Deep Forest Green
    ============================================ */
 .dark {
   --primary: #8EB69B;
