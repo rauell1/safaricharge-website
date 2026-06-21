@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, useScroll, useInView, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,6 +22,30 @@ import {
 interface LandingProps {
   onGetStarted: () => void;
   onNavigate?: (tab: string) => void;
+}
+
+/* ── animated counter ───────────────────────────────────────── */
+function AnimatedStat({ value }: { value: string }) {
+  const numStr = value.match(/[\d.]+/)?.[0] ?? '0';
+  const num = parseFloat(numStr);
+  const suffix = value.replace(/[\d.]+/, '');
+  const isDecimal = numStr.includes('.');
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  useEffect(() => {
+    if (!inView) return;
+    let start: number | null = null;
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / 2000, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setCount(isDecimal ? Math.round(eased * num * 10) / 10 : Math.round(eased * num));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [inView, num, isDecimal]);
+  return <span ref={ref}>{count}{suffix}</span>;
 }
 
 /* ── shared animation variants ─────────────────────────────── */
@@ -160,6 +184,7 @@ const featureDetails: Record<string, FeatureDetail> = {
 export function Landing({ onGetStarted }: LandingProps) {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { scrollYProgress } = useScroll();
 
   const openModal = (id: string) => { setSelectedFeature(id); setIsModalOpen(true); };
   const featureDetail = selectedFeature ? featureDetails[selectedFeature] : null;
@@ -254,6 +279,11 @@ export function Landing({ onGetStarted }: LandingProps) {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Scroll progress bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#235347] via-[#8EB69B] to-[#052659] z-[60]"
+        style={{ scaleX: scrollYProgress, transformOrigin: '0%' }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────────── */}
       <motion.nav
@@ -505,7 +535,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               >
                 <s.icon className="w-5 h-5 text-[#235347] mb-2 opacity-60" />
                 <p className="text-3xl font-black bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
-                  {s.value}
+                  <AnimatedStat value={s.value} />
                 </p>
                 <p className="text-sm text-gray-500 mt-1 font-medium">{s.label}</p>
               </motion.div>
