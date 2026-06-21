@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -13,33 +12,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Zap,
-  MapPin,
-  Battery,
-  BarChart3,
-  ArrowRight,
-  CheckCircle,
-  Leaf,
+  Zap, MapPin, BarChart3, ArrowRight, CheckCircle,
+  Leaf, Clock, Cpu, Recycle, Plug, ChevronRight,
+  Shield, Building2, Sun, Calculator, Activity,
+  FileText, Truck, Wrench, Star, Phone, Mail,
   TrendingUp,
-  Globe,
-  Clock,
-  Cpu,
-  Recycle,
-  Plug,
-  Home,
-  ChevronRight,
-  Shield,
-  Building2,
-  Sun,
-  BatteryCharging,
-  Factory,
-  Calculator,
-  Activity,
-  FileText,
-  Truck,
-  Wrench,
-  Car,
-  Gauge
 } from 'lucide-react';
 
 interface LandingProps {
@@ -47,137 +24,21 @@ interface LandingProps {
   onNavigate?: (tab: string) => void;
 }
 
-// Freely floating icon that moves like carried by water/air in all directions
-function FloatingIcon({ 
-  icon: Icon, 
-  initialX, 
-  initialY, 
-  size = 32,
-  color = "rgba(142, 182, 155, 0.6)",
-  delay = 0
-}: { 
-  icon: React.ElementType; 
-  initialX: number; 
-  initialY: number; 
-  size?: number;
-  color?: string;
-  delay?: number;
-}) {
-  // Generate unique random values for each icon
-  const floatDurationX = 8 + Math.random() * 6;
-  const floatDurationY = 7 + Math.random() * 5;
-  const floatDistanceX = 30 + Math.random() * 40;
-  const floatDistanceY = 25 + Math.random() * 35;
-  const rotateDuration = 10 + Math.random() * 8;
-  
-  return (
-    <div 
-      className="absolute pointer-events-none select-none"
-      style={{ 
-        left: initialX, 
-        top: initialY,
-        transform: 'translate(-50%, -50%)'
-      }}
-    >
-      <motion.div
-        animate={{
-          x: [0, floatDistanceX, 0, -floatDistanceX * 0.7, 0, floatDistanceX * 0.5, 0],
-          y: [0, -floatDistanceY * 0.6, -floatDistanceY, -floatDistanceY * 0.4, 0, floatDistanceY * 0.8, floatDistanceY * 0.3, 0],
-          rotate: [0, 8, -5, 10, -3, 5, 0],
-          scale: [1, 1.05, 1, 0.95, 1.02, 1],
-        }}
-        transition={{
-          x: {
-            duration: floatDurationX,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: delay,
-          },
-          y: {
-            duration: floatDurationY,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: delay * 0.7,
-          },
-          rotate: {
-            duration: rotateDuration,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: delay * 0.5,
-          },
-          scale: {
-            duration: 5 + Math.random() * 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: delay * 0.3,
-          }
-        }}
-      >
-        <Icon 
-          size={size} 
-          style={{ color: color }}
-          strokeWidth={1.5}
-        />
-      </motion.div>
-    </div>
-  );
-}
+/* ── shared animation variants ─────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
+};
 
-// Animated electricity bolt
-function ElectricBolt({ x, y, delay = 0 }: { x: string; y: string; delay?: number }) {
-  return (
-    <motion.div
-      className="absolute pointer-events-none"
-      style={{ left: x, top: y }}
-      animate={{
-        scale: [1, 1.2, 1],
-        opacity: [0.4, 0.7, 0.4],
-        rotate: [0, 10, -10, 0]
-      }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        delay
-      }}
-    >
-      <Zap size={18} style={{ color: '#FFD700' }} strokeWidth={2} />
-    </motion.div>
-  );
-}
+const stagger = {
+  show: { transition: { staggerChildren: 0.1 } },
+};
 
-// Animated location dot
-function LocationDot({ x, y, delay = 0, color = "#8EB69B" }: { x: string; y: string; delay?: number; color?: string }) {
-  return (
-    <motion.div
-      className="absolute pointer-events-none"
-      style={{ left: x, top: y }}
-      animate={{
-        scale: [1, 1.4, 1],
-        opacity: [0.4, 0.7, 0.4]
-      }}
-      transition={{
-        duration: 2,
-        repeat: Infinity,
-        delay
-      }}
-    >
-      <div 
-        className="w-3 h-3 rounded-full" 
-        style={{ backgroundColor: color }}
-      />
-      <div 
-        className="absolute inset-0 w-3 h-3 rounded-full animate-ping" 
-        style={{ backgroundColor: color, opacity: 0.3 }}
-      />
-    </motion.div>
-  );
-}
-
+/* ── feature modal data ─────────────────────────────────────── */
 interface FeatureDetail {
   title: string;
   description: string;
   icon: React.ElementType;
-  color: string;
   gradient: string;
   features: { title: string; description: string; icon: React.ElementType }[];
   stats: { value: string; label: string }[];
@@ -186,21 +47,21 @@ interface FeatureDetail {
 
 const featureDetails: Record<string, FeatureDetail> = {
   'charging-network': {
-    title: 'Kenya\'s Largest EV Charging Network',
-    description: 'Access 254+ public charging points across 11 counties in Kenya. Our network spans from Nairobi to Mombasa, Kisumu to Eldoret, ensuring you\'re never far from a reliable charging station.',
+    title: "Kenya's Largest EV Charging Network",
+    description:
+      "Access 254+ public charging points across 11 counties in Kenya. Our network spans from Nairobi to Mombasa, Kisumu to Eldoret, ensuring you're never far from a reliable charging station.",
     icon: MapPin,
-    color: 'text-[#235347]',
     gradient: 'from-[#235347] to-[#163832]',
     features: [
       { title: 'Real-time Availability', description: 'See which chargers are available before you arrive with live status updates', icon: Activity },
       { title: 'Multi-connector Support', description: 'CCS2, CHAdeMO, Type 2, and Tesla connectors available at various locations', icon: Plug },
-      { title: 'High-Speed Charging', description: 'Up to 350kW DC fast charging for rapid top-ups in 15-30 minutes', icon: Zap },
+      { title: 'High-Speed Charging', description: 'Up to 350 kW DC fast charging for rapid top-ups in 15–30 minutes', icon: Zap },
       { title: 'Smart Routing', description: 'Get directions with distance, duration, and traffic conditions', icon: MapPin },
     ],
     stats: [
       { value: '254+', label: 'Public Chargers' },
       { value: '11', label: 'Counties' },
-      { value: '350kW', label: 'Max Speed' },
+      { value: '350 kW', label: 'Max Speed' },
       { value: '98.5%', label: 'Uptime' },
     ],
     benefits: [
@@ -214,9 +75,9 @@ const featureDetails: Record<string, FeatureDetail> = {
   },
   'battery-toolkit': {
     title: 'Battery Lifecycle Management',
-    description: 'Complete EV battery repurposing and recycling solution. Evaluate battery health, calculate second-life value, and find optimal applications for used EV batteries.',
+    description:
+      'Complete EV battery repurposing and recycling solution. Evaluate battery health, calculate second-life value, and find optimal applications for used EV batteries.',
     icon: Recycle,
-    color: 'text-[#052659]',
     gradient: 'from-[#052659] to-[#141E30]',
     features: [
       { title: 'SoH Assessment', description: 'Comprehensive State of Health testing and degradation analysis', icon: Activity },
@@ -226,9 +87,9 @@ const featureDetails: Record<string, FeatureDetail> = {
     ],
     stats: [
       { value: '2,450+', label: 'Batteries Processed' },
-      { value: '185M', label: 'kWh Repurposed' },
+      { value: '185 M', label: 'kWh Repurposed' },
       { value: '85%', label: 'Material Recovery' },
-      { value: '8-10yr', label: 'Extended Life' },
+      { value: '8–10 yr', label: 'Extended Life' },
     ],
     benefits: [
       'Environmental impact certification',
@@ -241,14 +102,14 @@ const featureDetails: Record<string, FeatureDetail> = {
   },
   'energy-intelligence': {
     title: 'AI-Powered Energy Analytics',
-    description: 'Harness the power of artificial intelligence to optimize your energy usage, predict maintenance needs, and maximize the efficiency of your EV fleet or charging infrastructure.',
+    description:
+      'Harness the power of artificial intelligence to optimise your energy usage, predict maintenance needs, and maximise the efficiency of your EV fleet or charging infrastructure.',
     icon: BarChart3,
-    color: 'text-[#5483B3]',
     gradient: 'from-[#5483B3] to-[#7DA0CA]',
     features: [
-      { title: 'Predictive Analytics', description: 'Machine learning models predict usage patterns and optimize charging schedules', icon: TrendingUp },
+      { title: 'Predictive Analytics', description: 'ML models predict usage patterns and optimise charging schedules', icon: TrendingUp },
       { title: 'Grid Integration', description: 'Smart grid communication for load balancing and demand response', icon: Activity },
-      { title: 'Fleet Optimization', description: 'Route planning and charging optimization for fleet operators', icon: Truck },
+      { title: 'Fleet Optimisation', description: 'Route planning and charging optimisation for fleet operators', icon: Truck },
       { title: 'Maintenance Alerts', description: 'Predictive maintenance notifications before equipment failure', icon: Wrench },
     ],
     stats: [
@@ -259,7 +120,7 @@ const featureDetails: Record<string, FeatureDetail> = {
     ],
     benefits: [
       'Real-time dashboards',
-      'Customizable alerts',
+      'Customisable alerts',
       'API integrations',
       'Automated reporting',
       'Energy cost forecasting',
@@ -268,20 +129,20 @@ const featureDetails: Record<string, FeatureDetail> = {
   },
   'sustainability': {
     title: 'Carbon Tracking & Sustainability',
-    description: 'Monitor your environmental impact, earn green certificates, and contribute to Kenya\'s clean energy transition. Every charge makes a difference.',
+    description:
+      "Monitor your environmental impact, earn green certificates, and contribute to Kenya's clean energy transition. Every charge makes a difference.",
     icon: Leaf,
-    color: 'text-[#8EB69B]',
     gradient: 'from-[#8EB69B] to-[#235347]',
     features: [
-      { title: 'Carbon Calculator', description: 'Real-time CO2 savings tracking compared to fossil fuel vehicles', icon: Calculator },
+      { title: 'Carbon Calculator', description: 'Real-time CO₂ savings tracking compared to fossil fuel vehicles', icon: Calculator },
       { title: 'Green Certificates', description: 'Downloadable sustainability certificates for corporate reporting', icon: FileText },
       { title: 'Impact Reports', description: 'Monthly and annual environmental impact summaries', icon: BarChart3 },
-      { title: 'Tree Equivalents', description: 'Visualize your impact in trees saved and emissions avoided', icon: Leaf },
+      { title: 'Tree Equivalents', description: 'Visualise your impact in trees saved and emissions avoided', icon: Leaf },
     ],
     stats: [
-      { value: '12,800', label: 'Tons CO2 Saved' },
-      { value: '580K', label: 'Trees Equivalent' },
-      { value: '2.1M', label: 'Liters Fuel Saved' },
+      { value: '12,800', label: 'Tons CO₂ Saved' },
+      { value: '580 K', label: 'Trees Equivalent' },
+      { value: '2.1 M', label: 'Litres Fuel Saved' },
       { value: '100%', label: 'Renewable Options' },
     ],
     benefits: [
@@ -295,547 +156,496 @@ const featureDetails: Record<string, FeatureDetail> = {
   },
 };
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-};
-
-const stagger = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
+/* ════════════════════════════════════════════════════════════ */
 export function Landing({ onGetStarted }: LandingProps) {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const features = [
+  const openModal = (id: string) => { setSelectedFeature(id); setIsModalOpen(true); };
+  const featureDetail = selectedFeature ? featureDetails[selectedFeature] : null;
+
+  /* ── data ── */
+  const services = [
     {
       id: 'charging-network',
+      num: '01',
       icon: MapPin,
-      title: '254+ Charging Points',
-      description: 'Kenya\'s largest EV charging network across 11 counties with real-time availability.',
-      gradient: 'from-[#235347] to-[#163832]',
-      iconBg: 'bg-gradient-to-br from-[#235347] to-[#163832]',
+      title: 'Charging Network',
+      description: "Kenya's largest EV charging network with 254+ points across 11 counties — real-time availability included.",
+      color: 'from-[#235347] to-[#163832]',
     },
     {
       id: 'battery-toolkit',
+      num: '02',
       icon: Recycle,
       title: 'Battery Repurposing',
-      description: 'Complete lifecycle management from EV to stationary storage with SoH assessment.',
-      gradient: 'from-[#052659] to-[#141E30]',
-      iconBg: 'bg-gradient-to-br from-[#052659] to-[#141E30]',
+      description: 'Full lifecycle management from EV to stationary storage with SoH assessment and second-life matching.',
+      color: 'from-[#052659] to-[#141E30]',
     },
     {
       id: 'energy-intelligence',
+      num: '03',
       icon: BarChart3,
       title: 'Energy Intelligence',
-      description: 'AI-powered analytics for grid optimization and predictive maintenance.',
-      gradient: 'from-[#5483B3] to-[#7DA0CA]',
-      iconBg: 'bg-gradient-to-br from-[#5483B3] to-[#7DA0CA]',
+      description: 'AI-powered analytics for grid optimisation, fleet routing, and predictive maintenance.',
+      color: 'from-[#5483B3] to-[#7DA0CA]',
     },
     {
       id: 'sustainability',
+      num: '04',
       icon: Leaf,
       title: 'Carbon Tracking',
-      description: 'Monitor your environmental impact and earn green certificates.',
-      gradient: 'from-[#8EB69B] to-[#235347]',
-      iconBg: 'bg-gradient-to-br from-[#8EB69B] to-[#235347]',
+      description: 'Monitor your environmental impact, earn green certificates, and meet ESG targets.',
+      color: 'from-[#8EB69B] to-[#235347]',
     },
   ];
 
   const stats = [
-    { value: '254', label: 'Public Chargers', icon: Plug, suffix: '🇰🇪', color: 'from-[#235347] to-[#163832]' },
-    { value: '11', label: 'Counties Covered', icon: MapPin, color: 'from-[#052659] to-[#141E30]' },
-    { value: '1.2M+', label: 'kWh Delivered', icon: Zap, color: 'from-[#5483B3] to-[#7DA0CA]' },
-    { value: '98.5%', label: 'Network Uptime', icon: TrendingUp, color: 'from-[#8EB69B] to-[#235347]' },
+    { value: '254+', label: 'Public Chargers', icon: Plug },
+    { value: '11', label: 'Counties Covered', icon: MapPin },
+    { value: '1.2 M+', label: 'kWh Delivered', icon: Zap },
+    { value: '98.5%', label: 'Network Uptime', icon: TrendingUp },
   ];
 
-  const counties = [
-    { name: 'Nairobi', stations: 30, color: 'from-[#235347] to-[#163832]' },
-    { name: 'Kiambu', stations: 9, color: 'from-[#052659] to-[#141E30]' },
-    { name: 'Nakuru', stations: 9, color: 'from-[#5483B3] to-[#7DA0CA]' },
-    { name: 'Machakos', stations: 7, color: 'from-[#8EB69B] to-[#235347]' },
-    { name: 'Laikipia', stations: 4, color: 'from-[#235347] to-[#8EB69B]' },
-    { name: 'Others', stations: 195, color: 'from-[#141E30] to-[#052659]' },
+  const steps = [
+    {
+      num: '01',
+      icon: Shield,
+      title: 'Create your account',
+      description: 'Sign up in under two minutes. Choose a plan that fits — individual driver, business fleet, or energy partner.',
+    },
+    {
+      num: '02',
+      icon: MapPin,
+      title: 'Find & charge',
+      description: 'Open the interactive map, locate the nearest station, navigate there, and start charging with one tap.',
+    },
+    {
+      num: '03',
+      icon: BarChart3,
+      title: 'Track & optimise',
+      description: 'Review charging history, monitor energy costs, measure carbon savings, and optimise your fleet in real time.',
+    },
   ];
 
-  const handleLearnMore = (featureId: string) => {
-    setSelectedFeature(featureId);
-    setIsModalOpen(true);
-  };
-
-  const featureDetail = selectedFeature ? featureDetails[selectedFeature] : null;
+  const testimonials = [
+    {
+      quote: "SafariCharge cut our fleet's charging admin from hours to minutes. The real-time map and billing reports are invaluable for our operations team.",
+      name: 'Amina Waweru',
+      role: 'Fleet Manager',
+      company: 'Nairobi Logistics Ltd',
+      rating: 5,
+    },
+    {
+      quote: "We deployed repurposed EV batteries for our lodge's solar storage. The SoH toolkit gave us confidence in every battery we selected.",
+      name: 'James Kamau',
+      role: 'Operations Director',
+      company: 'Rift Valley Eco Lodges',
+      rating: 5,
+    },
+    {
+      quote: "The carbon tracking certificates have been essential for our ESG reporting. Our investors love the detailed monthly impact summaries.",
+      name: 'Grace Odhiambo',
+      role: 'Sustainability Lead',
+      company: 'East Africa Holdings',
+      rating: 5,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#fafcfc]">
-      {/* Navigation */}
-      <motion.nav 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
+    <div className="min-h-screen bg-white">
+
+      {/* ── NAV ─────────────────────────────────────────────── */}
+      <motion.nav
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-50"
+        className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100"
       >
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-          <motion.div 
-            className="flex items-center gap-2"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center shadow-lg">
-              <Zap className="w-5 h-5 text-white" />
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center shadow-md">
+              <Zap className="w-4.5 h-4.5 text-white" />
             </div>
-            <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">SafariCharge</span>
-              <p className="text-[10px] text-[#8EB69B] -mt-0.5">POWERING AFRICA</p>
+            <div className="leading-none">
+              <span className="text-lg font-extrabold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
+                SafariCharge
+              </span>
+              <p className="text-[9px] font-semibold tracking-widest text-[#8EB69B] uppercase">Powering Africa</p>
             </div>
-          </motion.div>
-          
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#network" className="text-sm text-gray-600 hover:text-[#235347] transition-colors font-medium">Network</a>
-            <a href="#features" className="text-sm text-gray-600 hover:text-[#235347] transition-colors font-medium">Features</a>
-            <a href="#sustainability" className="text-sm text-gray-600 hover:text-[#235347] transition-colors font-medium">Sustainability</a>
-            <a href="#about" className="text-sm text-gray-600 hover:text-[#235347] transition-colors font-medium">About</a>
-            <Button onClick={onGetStarted} className="bg-gradient-to-r from-[#235347] to-[#052659] hover:from-[#163832] hover:to-[#141E30] text-white gap-2 shadow-lg">
-              <Shield className="w-4 h-4" />
-              Sign In
-            </Button>
           </div>
 
-          <Button onClick={onGetStarted} className="md:hidden bg-gradient-to-r from-[#235347] to-[#052659] text-white" size="sm">
-            Sign In
-          </Button>
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-7">
+            {['Network', 'Services', 'How It Works', 'About'].map((label, i) => (
+              <a
+                key={label}
+                href={`#${['network', 'services', 'how-it-works', 'about'][i]}`}
+                className="text-sm font-medium text-gray-500 hover:text-[#235347] transition-colors"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onGetStarted}
+              className="hidden md:inline-flex text-[#235347] font-semibold hover:bg-[#f0f7f5]"
+            >
+              Sign In
+            </Button>
+            <Button
+              onClick={onGetStarted}
+              size="sm"
+              className="bg-gradient-to-r from-[#235347] to-[#052659] text-white hover:opacity-90 shadow-md font-semibold"
+            >
+              Get Started
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </motion.nav>
 
-      {/* Hero Section with Smooth Floating Animations */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#021024] via-[#052659] to-[#235347]" />
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'linear-gradient(rgba(142,182,155,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(142,182,155,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px'
-          }} />
-        </div>
-        
-        {/* Free-Floating Icons - carried by water/air effect */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden lg:block">
-          {/* Scattered across the section */}
-          <FloatingIcon icon={Zap} initialX={80} initialY={120} size={36} color="rgba(255, 215, 0, 0.7)" delay={0} />
-          <FloatingIcon icon={Battery} initialX={280} initialY={100} size={32} color="rgba(142, 182, 155, 0.6)" delay={0.5} />
-          <FloatingIcon icon={Plug} initialX={480} initialY={150} size={28} color="rgba(35, 83, 71, 0.6)" delay={1} />
-          <FloatingIcon icon={Car} initialX={680} initialY={110} size={34} color="rgba(142, 182, 155, 0.6)" delay={1.5} />
-          <FloatingIcon icon={Gauge} initialX={880} initialY={130} size={30} color="rgba(35, 83, 71, 0.6)" delay={2} />
-          
-          {/* Row 2 - Middle */}
-          <FloatingIcon icon={MapPin} initialX={130} initialY={350} size={28} color="rgba(35, 83, 71, 0.7)" delay={2.5} />
-          <FloatingIcon icon={Activity} initialX={330} initialY={380} size={32} color="rgba(142, 182, 155, 0.6)" delay={3} />
-          <FloatingIcon icon={BatteryCharging} initialX={530} initialY={360} size={30} color="rgba(35, 83, 71, 0.6)" delay={3.5} />
-          <FloatingIcon icon={Zap} initialX={730} initialY={390} size={28} color="rgba(255, 215, 0, 0.6)" delay={4} />
-          
-          {/* Row 3 - Bottom */}
-          <FloatingIcon icon={Leaf} initialX={180} initialY={580} size={34} color="rgba(142, 182, 155, 0.6)" delay={4.5} />
-          <FloatingIcon icon={Sun} initialX={380} initialY={620} size={32} color="rgba(255, 215, 0, 0.6)" delay={5} />
-          <FloatingIcon icon={Building2} initialX={580} initialY={600} size={28} color="rgba(35, 83, 71, 0.6)" delay={5.5} />
-          <FloatingIcon icon={Factory} initialX={780} initialY={640} size={30} color="rgba(142, 182, 155, 0.6)" delay={6} />
-          
-          {/* Right Side */}
-          <FloatingIcon icon={Zap} initialX={1100} initialY={180} size={40} color="rgba(255, 215, 0, 0.7)" delay={6.5} />
-          <FloatingIcon icon={Battery} initialX={1050} initialY={380} size={36} color="rgba(142, 182, 155, 0.6)" delay={7} />
-          <FloatingIcon icon={Plug} initialX={1120} initialY={580} size={32} color="rgba(35, 83, 71, 0.6)" delay={7.5} />
-          
-          {/* Left Side */}
-          <FloatingIcon icon={Car} initialX={50} initialY={480} size={38} color="rgba(142, 182, 155, 0.6)" delay={8} />
-          <FloatingIcon icon={Gauge} initialX={70} initialY={700} size={34} color="rgba(35, 83, 71, 0.6)" delay={8.5} />
-          
-          {/* Additional scattered icons */}
-          <FloatingIcon icon={Recycle} initialX={950} initialY={280} size={28} color="rgba(142, 182, 155, 0.5)" delay={9} />
-          <FloatingIcon icon={Leaf} initialX={200} initialY={200} size={26} color="rgba(142, 182, 155, 0.5)" delay={9.5} />
-          <FloatingIcon icon={BatteryCharging} initialX={1150} initialY={450} size={24} color="rgba(35, 83, 71, 0.5)" delay={10} />
-        </div>
-        
-        {/* Animated Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-gradient-to-br from-[#021024] via-[#052659] to-[#163832]">
+        {/* subtle grid */}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)',
+            backgroundSize: '64px 64px',
+          }}
+        />
+        {/* glow orbs */}
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-[#5483B3]/20 blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-[#235347]/25 blur-[140px] pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-16 items-center">
+
+          {/* LEFT — copy */}
           <motion.div
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.2, 0.35, 0.2],
-            }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-br from-[#5483B3] to-[#7DA0CA] blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.4, 1],
-              opacity: [0.15, 0.3, 0.15],
-            }}
-            transition={{ duration: 10, repeat: Infinity, delay: 2 }}
-            className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#8EB69B] to-[#235347] blur-3xl"
-          />
-        </div>
-        
-        <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            initial="hidden"
+            animate="show"
+            variants={stagger}
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm mb-8 border border-white/20"
-            >
-              <Zap className="w-4 h-4 text-[#8EB69B]" />
-              <span>254 Public Chargers Across Kenya</span>
-              <Badge className="bg-[#8EB69B] text-[#051F20] border-0 ml-2 text-xs font-semibold">LIVE</Badge>
+            <motion.div variants={fadeUp}>
+              <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/15 text-white/80 text-xs font-medium mb-7">
+                <span className="w-2 h-2 rounded-full bg-[#8EB69B] animate-pulse" />
+                254 live charging stations across Kenya
+              </span>
             </motion.div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black leading-tight text-white mb-6">
-              Kenya's Premier{' '}
-              <span className="bg-gradient-to-r from-[#8EB69B] via-[#5483B3] to-[#C1E8FF] bg-clip-text text-transparent">
+
+            <motion.h1
+              variants={fadeUp}
+              className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black leading-[1.1] text-white mb-6"
+            >
+              Africa's Premier{' '}
+              <span className="bg-gradient-to-r from-[#8EB69B] to-[#C1E8FF] bg-clip-text text-transparent">
                 EV Charging
               </span>
-              <br />
-              <span className="text-3xl md:text-4xl lg:text-5xl bg-gradient-to-r from-white to-[#C1E8FF] bg-clip-text text-transparent">Network & Energy Platform</span>
-            </h1>
-          </motion.div>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto mb-10 leading-relaxed"
-          >
-            Find charging stations, manage fleet energy, repurpose EV batteries, 
-            and track your carbon footprint - all in one intelligent platform powering 
-            Africa's electric mobility revolution.
-          </motion.p>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="flex flex-wrap gap-4 justify-center mb-16"
-          >
-            <Button 
-              size="lg"
-              onClick={onGetStarted}
-              className="bg-white text-[#051F20] hover:bg-[#DAF1DE] text-lg px-8 h-14 shadow-2xl font-semibold w-full sm:w-auto"
+              {' '}&amp;{' '}
+              <span className="bg-gradient-to-r from-[#C1E8FF] to-[#8EB69B] bg-clip-text text-transparent">
+                Energy Platform
+              </span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              className="text-lg text-white/60 leading-relaxed mb-9 max-w-xl"
             >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                const networkSection = document.getElementById('network');
-                if (networkSection) {
-                  networkSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 text-lg px-8 h-14 backdrop-blur-sm w-full sm:w-auto"
-            >
-              <Globe className="w-5 h-5 mr-2" />
-              Explore Network
-            </Button>
+              Find charging stations, manage fleet energy, repurpose EV batteries, and track your
+              carbon footprint — all in one intelligent platform powering East Africa's electric
+              mobility revolution.
+            </motion.p>
+
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-4 mb-10">
+              <Button
+                size="lg"
+                onClick={onGetStarted}
+                className="h-13 px-8 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold shadow-xl text-base"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => document.getElementById('network')?.scrollIntoView({ behavior: 'smooth' })}
+                className="h-13 px-8 bg-transparent text-white border-white/25 hover:bg-white/10 font-semibold text-base"
+              >
+                Explore Network
+              </Button>
+            </motion.div>
+
+            {/* trust row */}
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+              {[
+                { icon: Shield, text: 'Enterprise-grade security' },
+                { icon: CheckCircle, text: '98.5% network uptime' },
+                { icon: Leaf, text: '12,800 t CO₂ saved' },
+              ].map(({ icon: Icon, text }) => (
+                <span key={text} className="inline-flex items-center gap-1.5 text-xs text-white/50 font-medium">
+                  <Icon className="w-3.5 h-3.5 text-[#8EB69B]" />
+                  {text}
+                </span>
+              ))}
+            </motion.div>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto"
+          {/* RIGHT — live status panel */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="hidden lg:block"
           >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 + index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="relative group cursor-pointer"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity`} />
-                <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all">
-                  <stat.icon className="w-6 h-6 text-[#8EB69B] mb-2 mx-auto" />
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-1">
-                    {stat.value}
-                    {stat.suffix && <span className="text-xl ml-1">{stat.suffix}</span>}
-                  </div>
-                  <div className="text-sm text-white/60">{stat.label}</div>
+            <div className="relative bg-white/8 backdrop-blur-xl rounded-3xl border border-white/12 p-7 shadow-2xl">
+              {/* header row */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">Network Status</p>
+                  <p className="text-white font-bold text-lg mt-0.5">Live Dashboard</p>
                 </div>
-              </motion.div>
-            ))}
+                <span className="flex items-center gap-1.5 bg-[#235347]/40 text-[#8EB69B] text-xs font-semibold px-3 py-1 rounded-full border border-[#8EB69B]/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8EB69B] animate-pulse" />
+                  LIVE
+                </span>
+              </div>
+
+              {/* station rows */}
+              {[
+                { name: 'Westlands Hub', city: 'Nairobi', status: 'Available', connectors: 8 },
+                { name: 'Garden City Mall', city: 'Nairobi', status: 'In Use', connectors: 6 },
+                { name: 'Nakumatt Mega', city: 'Mombasa', status: 'Available', connectors: 4 },
+                { name: 'Milimani Station', city: 'Kisumu', status: 'Available', connectors: 3 },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.name}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + i * 0.1 }}
+                  className="flex items-center justify-between py-3 border-b border-white/8 last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-[#8EB69B]" />
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-semibold leading-none">{s.name}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{s.city}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-white/40 text-xs">{s.connectors} pts</span>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      s.status === 'Available'
+                        ? 'bg-[#235347]/40 text-[#8EB69B]'
+                        : 'bg-[#5483B3]/30 text-[#C1E8FF]'
+                    }`}>
+                      {s.status}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* mini stats */}
+              <div className="grid grid-cols-3 gap-3 mt-6">
+                {[
+                  { value: '247', label: 'Online', color: 'text-[#8EB69B]' },
+                  { value: '4', label: 'Charging', color: 'text-[#C1E8FF]' },
+                  { value: '3', label: 'Maintenance', color: 'text-white/40' },
+                ].map((m) => (
+                  <div key={m.label} className="bg-white/6 rounded-xl p-3 text-center">
+                    <p className={`text-xl font-black ${m.color}`}>{m.value}</p>
+                    <p className="text-white/35 text-xs mt-0.5">{m.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={onGetStarted}
+                className="w-full mt-5 bg-gradient-to-r from-[#235347] to-[#052659] text-white font-semibold hover:opacity-90"
+              >
+                View Full Map
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div 
-          animate={{ y: [0, 10, 0] }}
+        {/* scroll cue */}
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/30"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </motion.div>
       </section>
 
-      {/* Network Coverage Section */}
-      <section id="network" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#fafcfc] scroll-mt-24">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-16"
-          >
-            <Badge className="bg-[#235347] text-white mb-4">Network Coverage</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold max-w-3xl mx-auto mb-4 text-gray-900">
-              Charging Infrastructure Across Kenya
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              From Nairobi to Eldoret, Mombasa to Kisumu - find charging stations wherever your journey takes you.
-            </p>
-          </motion.div>
-
-          {/* County Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
-            {counties.map((county, index) => (
+      {/* ── STATS BAR ────────────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+            {stats.map((s, i) => (
               <motion.div
-                key={county.name}
-                initial={{ opacity: 0, y: 20 }}
+                key={s.label}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -8 }}
+                transition={{ delay: i * 0.08 }}
+                className="flex flex-col items-center justify-center py-8 px-4 text-center"
               >
-                <Card className="text-center hover:shadow-2xl transition-all duration-300 border-0 shadow-lg bg-white overflow-hidden group cursor-pointer">
-                  <div className={`h-1 w-full bg-gradient-to-r ${county.color}`} />
-                  <CardContent className="p-5">
-                    <MapPin className="w-7 h-7 mx-auto mb-3 text-[#235347] group-hover:scale-110 transition-transform" />
-                    <p className="font-semibold text-gray-900">{county.name}</p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">{county.stations}</p>
-                    <p className="text-sm text-gray-500">stations</p>
-                  </CardContent>
-                </Card>
+                <s.icon className="w-5 h-5 text-[#235347] mb-2 opacity-60" />
+                <p className="text-3xl font-black bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
+                  {s.value}
+                </p>
+                <p className="text-sm text-gray-500 mt-1 font-medium">{s.label}</p>
               </motion.div>
             ))}
           </div>
-
-          {/* Interactive Map with Floating Animations */}
-          <Card className="border-0 shadow-2xl overflow-hidden bg-gradient-to-br from-[#021024] via-[#052659] to-[#235347] relative">
-            <div className="h-96 relative">
-              {/* Animated Background Elements */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Rotating Earth */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                  className="absolute top-8 right-8"
-                >
-                  <Globe size={100} style={{ color: 'rgba(142, 182, 155, 0.2)' }} strokeWidth={1} />
-                </motion.div>
-
-                {/* Electricity Bolts */}
-                <ElectricBolt x="15%" y="20%" delay={0} />
-                <ElectricBolt x="25%" y="60%" delay={0.5} />
-                <ElectricBolt x="70%" y="30%" delay={1} />
-                <ElectricBolt x="80%" y="70%" delay={1.5} />
-                <ElectricBolt x="40%" y="45%" delay={0.8} />
-
-                {/* Location Dots */}
-                <LocationDot x="20%" y="25%" delay={0.3} color="#8EB69B" />
-                <LocationDot x="35%" y="55%" delay={0.6} color="#5483B3" />
-                <LocationDot x="50%" y="35%" delay={0.9} color="#8EB69B" />
-                <LocationDot x="65%" y="65%" delay={1.2} color="#5483B3" />
-                <LocationDot x="75%" y="40%" delay={1.5} color="#8EB69B" />
-
-                {/* Animated Rings */}
-                <motion.div
-                  animate={{
-                    scale: [1, 1.5, 1],
-                    opacity: [0.3, 0.1, 0.3],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-2 border-[#8EB69B]/30 rounded-full"
-                />
-                <motion.div
-                  animate={{
-                    scale: [1, 1.8, 1],
-                    opacity: [0.2, 0.05, 0.2],
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 border-2 border-[#5483B3]/20 rounded-full"
-                />
-              </div>
-
-              {/* Center Content */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center z-10">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <Globe size={80} style={{ color: 'rgba(142, 182, 155, 0.4)' }} strokeWidth={1} />
-                  </motion.div>
-                  <p className="text-2xl font-semibold text-white mt-4">Interactive Map</p>
-                  <p className="text-[#8EB69B] mt-1">Sign in to explore all 254 charging points</p>
-                  <Button onClick={onGetStarted} className="mt-6 bg-white text-[#051F20] hover:bg-[#DAF1DE] shadow-lg">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    View Full Map
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white scroll-mt-24">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+      {/* ── SERVICES ─────────────────────────────────────────── */}
+      <section id="services" className="py-24 bg-[#f8fafb] scroll-mt-20">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-16"
-          >
-            <p className="text-[#235347] font-bold uppercase tracking-widest text-sm mb-4">Platform Features</p>
-            <h2 className="text-3xl md:text-4xl font-bold max-w-3xl mx-auto text-gray-900">
-              Everything You Need for Electric Mobility
-            </h2>
-            <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-              Click "Learn more" on any feature to discover detailed information about our comprehensive platform.
-            </p>
-          </motion.div>
-          
-          <motion.div 
             variants={stagger}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="text-center mb-14"
           >
-            {features.map((feature, index) => (
+            <motion.p variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-3">
+              What We Offer
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              A Complete Clean-Mobility Ecosystem
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-500 max-w-2xl mx-auto text-lg">
+              From charging infrastructure to battery repurposing and AI analytics — every tool you
+              need to lead Africa's electric transition.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((svc, i) => (
               <motion.div
-                key={feature.id}
-                variants={fadeInUp}
-                whileHover={{ y: -10 }}
-                className="group"
+                key={svc.id}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -6 }}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col"
               >
-                <Card className="hover:shadow-2xl transition-all duration-300 border-0 shadow-lg h-full bg-white overflow-hidden">
-                  <div className={`h-2 bg-gradient-to-r ${feature.gradient}`} />
-                  <CardContent className="p-6">
-                    <div className={`w-14 h-14 rounded-2xl ${feature.iconBg} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform shadow-lg`}>
-                      <feature.icon className="h-7 w-7 text-white" />
+                <div className={`h-1.5 w-full bg-gradient-to-r ${svc.color}`} />
+                <div className="p-7 flex flex-col flex-1">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${svc.color} flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
+                      <svc.icon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-gray-900">{feature.title}</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full text-[#235347] hover:bg-[#f0f7f5] font-semibold group/btn"
-                      onClick={() => handleLearnMore(feature.id)}
-                    >
-                      Learn more
-                      <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <span className="text-4xl font-black text-gray-100 select-none leading-none mt-1">{svc.num}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{svc.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed flex-1">{svc.description}</p>
+                  <button
+                    onClick={() => openModal(svc.id)}
+                    className="mt-5 flex items-center gap-1 text-sm font-semibold text-[#235347] hover:gap-2 transition-all"
+                  >
+                    Learn more
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Sustainability Section */}
-      <section id="sustainability" className="py-24 px-4 bg-gradient-to-br from-[#021024] via-[#052659] to-[#235347] relative overflow-hidden scroll-mt-24">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(142,182,155,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(84,131,179,0.3) 0%, transparent 50%)'
-          }} />
-        </div>
-        
-        <div className="w-full max-w-[1600px] mx-auto relative z-10">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+      {/* ── NETWORK ──────────────────────────────────────────── */}
+      <section id="network" className="py-24 bg-white scroll-mt-20">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* copy */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <Badge className="bg-[#8EB69B] text-[#051F20] mb-4">Sustainability</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-                Battery Repurposing & Circular Economy
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-3">Our Network</p>
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-5">
+                Charging Infrastructure<br />Across Kenya
               </h2>
-              <p className="text-[#C1E8FF] mb-6 leading-relaxed text-lg">
-                Give EV batteries a second life. Our comprehensive toolkit helps you evaluate, 
-                repurpose, and deploy used EV batteries for stationary storage applications.
+              <p className="text-gray-500 text-lg leading-relaxed mb-8">
+                From Nairobi to Eldoret, Mombasa to Kisumu — SafariCharge stations are positioned
+                at hotels, malls, petrol stations, and business parks across 11 counties.
               </p>
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-9">
                 {[
-                  'State of Health (SoH) Assessment',
-                  'Second-life Application Matching',
-                  'Value Estimation Calculator',
-                  'Environmental Impact Tracking',
-                ].map((item, idx) => (
-                  <motion.div 
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="p-1.5 rounded-full bg-[#8EB69B]">
-                      <CheckCircle className="h-4 w-4 text-[#051F20]" />
-                    </div>
-                    <span className="font-medium text-white text-lg">{item}</span>
-                  </motion.div>
+                  'CCS2, CHAdeMO, Type 2 & Tesla connectors',
+                  'Up to 350 kW DC fast charging',
+                  'Real-time availability on our map',
+                  '24/7 remote monitoring & support',
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-[#235347] flex-shrink-0" />
+                    <span className="text-gray-600 font-medium">{item}</span>
+                  </div>
                 ))}
               </div>
-              <Button onClick={onGetStarted} size="lg" className="bg-white text-[#051F20] hover:bg-[#DAF1DE] shadow-xl">
-                <Recycle className="w-5 h-5 mr-2" />
-                Access Battery Toolkit
+              <Button
+                onClick={onGetStarted}
+                size="lg"
+                className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-lg"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                View Interactive Map
               </Button>
             </motion.div>
-            
+
+            {/* county grid */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-3 gap-4"
             >
               {[
-                { value: '85%', label: 'Material Recovery', icon: Recycle, gradient: 'from-[#235347] to-[#163832]' },
-                { value: '5.2t', label: 'CO₂ Saved/Battery', icon: Leaf, gradient: 'from-[#8EB69B] to-[#235347]' },
-                { value: '8-10yr', label: 'Extended Life', icon: Clock, gradient: 'from-[#5483B3] to-[#7DA0CA]' },
-                { value: '2,450+', label: 'Batteries Processed', icon: Cpu, gradient: 'from-[#052659] to-[#141E30]' },
-              ].map((stat, idx) => (
+                { name: 'Nairobi', stations: 30, color: 'from-[#235347] to-[#163832]' },
+                { name: 'Mombasa', stations: 18, color: 'from-[#052659] to-[#141E30]' },
+                { name: 'Kiambu', stations: 9, color: 'from-[#5483B3] to-[#7DA0CA]' },
+                { name: 'Nakuru', stations: 9, color: 'from-[#8EB69B] to-[#235347]' },
+                { name: 'Machakos', stations: 7, color: 'from-[#235347] to-[#8EB69B]' },
+                { name: 'Kisumu', stations: 6, color: 'from-[#052659] to-[#5483B3]' },
+                { name: 'Eldoret', stations: 5, color: 'from-[#163832] to-[#235347]' },
+                { name: 'Laikipia', stations: 4, color: 'from-[#141E30] to-[#052659]' },
+                { name: '+3 more', stations: 166, color: 'from-[#235347] to-[#052659]' },
+              ].map((c, i) => (
                 <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  key={c.name}
+                  initial={{ opacity: 0, scale: 0.92 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-6 text-white shadow-xl`}
+                  transition={{ delay: i * 0.06 }}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 text-center group overflow-hidden relative"
                 >
-                  <stat.icon className="w-7 h-7 mb-3 opacity-80" />
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <div className="text-white/70 text-sm mt-1">{stat.label}</div>
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${c.color}`} />
+                  <p className={`text-2xl font-black bg-gradient-to-r ${c.color} bg-clip-text text-transparent`}>
+                    {c.stations}
+                  </p>
+                  <p className="text-xs font-semibold text-gray-700 mt-1">{c.name}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">stations</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -843,243 +653,467 @@ export function Landing({ onGetStarted }: LandingProps) {
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-[#f0f7f5] scroll-mt-24">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+      {/* ── IMPACT BAND ──────────────────────────────────────── */}
+      <section className="py-20 bg-gradient-to-r from-[#021024] via-[#052659] to-[#163832] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%,rgba(142,182,155,0.5) 0%,transparent 55%),radial-gradient(circle at 80% 50%,rgba(84,131,179,0.5) 0%,transparent 55%)' }}
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { value: '12,800 t', label: 'CO₂ Saved', sub: 'Total fleet emissions offset' },
+              { value: '2,450+', label: 'Batteries Repurposed', sub: 'Extended to second-life use' },
+              { value: '185 MWh', label: 'Energy Repurposed', sub: 'Battery storage deployed' },
+              { value: '580 K', label: 'Trees Equivalent', sub: 'Annual carbon absorption' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <p className="text-4xl md:text-5xl font-black text-white mb-1">{item.value}</p>
+                <p className="text-[#8EB69B] font-bold text-sm mb-1">{item.label}</p>
+                <p className="text-white/35 text-xs">{item.sub}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ─────────────────────────────────────── */}
+      <section id="how-it-works" className="py-24 bg-[#f8fafb] scroll-mt-20">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-3">
+              Simple Process
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              Up and Running in Minutes
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-gray-500 max-w-xl mx-auto text-lg">
+              Three simple steps from sign-up to your first charge — no complex setup required.
+            </motion.p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8 relative">
+            {/* connector line */}
+            <div className="hidden md:block absolute top-[3.5rem] left-[25%] right-[25%] h-px bg-gradient-to-r from-[#235347]/20 via-[#8EB69B]/40 to-[#052659]/20" />
+
+            {steps.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center hover:shadow-lg transition-shadow"
+              >
+                {/* number circle */}
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center mx-auto mb-5 shadow-lg">
+                  <step.icon className="w-7 h-7 text-white" />
+                </div>
+                <span className="absolute top-5 right-5 text-5xl font-black text-gray-100 select-none leading-none">
+                  {step.num}
+                </span>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{step.description}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center max-w-3xl mx-auto"
+            className="text-center mt-12"
           >
-            <p className="text-[#235347] font-bold uppercase tracking-widest text-sm mb-4">About SafariCharge</p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
-              Powering Africa's Electric Mobility Revolution
-            </h2>
-            <p className="text-gray-600 mb-4 leading-relaxed text-lg">
-              SafariCharge is building the digital and physical backbone for East Africa's clean-mobility transition. 
-              Our platform connects electric vehicles with reliable charging points, intelligent routing, 
-              and distributed energy systems - including solar and second-life battery storage.
-            </p>
-            <p className="text-gray-600 mb-8 leading-relaxed text-lg">
-              We exist to make clean mobility accessible, affordable, and resilient for drivers, businesses, 
-              and communities - from major cities to rural locations where energy access is limited.
-            </p>
-            <Button onClick={onGetStarted} size="lg" className="bg-gradient-to-r from-[#235347] to-[#052659] hover:from-[#163832] hover:to-[#141E30] text-white shadow-xl">
-              Join the Revolution
-              <ArrowRight className="w-5 w-5 ml-2" />
+            <Button
+              size="lg"
+              onClick={onGetStarted}
+              className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-xl px-10 h-12"
+            >
+              Start for Free
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-r from-[#235347] via-[#052659] to-[#235347] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(142,182,155,0.4) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(84,131,179,0.4) 0%, transparent 50%)'
-          }} />
-        </div>
-        <div className="w-full max-w-[1600px] mx-auto text-center relative z-10">
+      {/* ── TESTIMONIALS ─────────────────────────────────────── */}
+      <section className="py-24 bg-white">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial="hidden"
+            whileInView="show"
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            variants={stagger}
+            className="text-center mb-14"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              Ready to power your journey?
-            </h2>
-            <p className="text-lg text-[#C1E8FF] mb-8 max-w-2xl mx-auto">
-              Sign in to access the full network map, battery toolkit, charging history, and exclusive member benefits.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button 
-                size="lg"
-                onClick={onGetStarted}
-                className="bg-white text-[#051F20] hover:bg-[#DAF1DE] text-lg px-10 h-14 shadow-2xl"
-              >
-                <Zap className="w-5 h-5 mr-2" />
-                Sign In to Dashboard
-              </Button>
-              <Button 
-                size="lg"
-                variant="outline"
-                className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 text-lg px-10 h-14"
-              >
-                Contact Sales
-              </Button>
-            </div>
+            <motion.p variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-3">
+              Testimonials
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              Trusted Across East Africa
+            </motion.h2>
           </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-7">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-[#f8fafb] rounded-2xl border border-gray-100 p-8 flex flex-col hover:shadow-lg transition-shadow"
+              >
+                <div className="flex gap-0.5 mb-5">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <blockquote className="text-gray-600 leading-relaxed flex-1 text-[0.95rem] italic mb-6">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="flex items-center gap-3 border-t border-gray-100 pt-5">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">{t.name}</p>
+                    <p className="text-gray-400 text-xs">{t.role} · {t.company}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Energy Division Banner */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#051F20] border-t border-white/10">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <div className="rounded-2xl bg-gradient-to-r from-[#235347]/20 to-[#052659]/20 border border-[#235347]/30 p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#235347] to-[#052659] shrink-0 shadow-lg">
-                <Sun className="h-7 w-7 text-white" />
+      {/* ── ABOUT ────────────────────────────────────────────── */}
+      <section id="about" className="py-24 bg-[#f8fafb] scroll-mt-20">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-3">About SafariCharge</p>
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">
+                Powering Africa's<br />Electric Mobility Revolution
+              </h2>
+              <p className="text-gray-500 text-lg leading-relaxed mb-5">
+                SafariCharge is building the digital and physical backbone for East Africa's clean-mobility
+                transition. Our platform connects electric vehicles with reliable charging points, intelligent
+                routing, and distributed energy systems — including solar and second-life battery storage.
+              </p>
+              <p className="text-gray-500 leading-relaxed mb-9">
+                We exist to make clean mobility accessible, affordable, and resilient for drivers, businesses,
+                and communities — from major cities to rural locations where energy access is limited.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { icon: Building2, text: 'Enterprise fleet solutions' },
+                  { icon: Shield, text: 'Regulatory compliance' },
+                  { icon: Leaf, text: 'Carbon-neutral operations' },
+                  { icon: TrendingUp, text: 'AI-driven optimisation' },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#f0f7f5] flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-[#235347]" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{text}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-5"
+            >
+              {[
+                { title: 'Founded in Nairobi', desc: 'Built for African roads, climate, and business realities — by a team that understands the continent.', icon: MapPin },
+                { title: 'Pan-African Vision', desc: 'Starting with Kenya, expanding to East Africa with a roadmap into West and Southern Africa.', icon: Zap },
+                { title: 'Backed by Clean Energy', desc: 'Our charging network is progressively integrated with solar and second-life battery storage.', icon: Sun },
+              ].map((item, i) => (
+                <div key={item.title} className="flex gap-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center flex-shrink-0 shadow-md">
+                    <item.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── ENERGY DIVISION ──────────────────────────────────── */}
+      <section className="py-20 bg-[#051F20]">
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-3xl bg-gradient-to-br from-[#235347]/30 via-[#052659]/20 to-[#235347]/10 border border-[#235347]/30 p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-start gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center flex-shrink-0 shadow-xl">
+                <Sun className="w-8 h-8 text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white font-bold text-lg">SafariCharge Energy</span>
-                  <span className="bg-[#235347] text-[#8EB69B] text-[10px] font-bold px-2 py-0.5 rounded-full tracking-widest uppercase">New</span>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-white font-extrabold text-2xl">SafariCharge Energy</span>
+                  <Badge className="bg-[#235347] text-[#8EB69B] border-0 text-[10px] font-bold uppercase tracking-widest">New</Badge>
                 </div>
-                <p className="text-white/60 text-sm max-w-md">
-                  Solar panels, hybrid inverters &amp; battery storage for African homes and businesses — fully integrated with our EV charging ecosystem.
+                <p className="text-white/50 max-w-lg leading-relaxed">
+                  Solar panels, hybrid inverters, and battery storage for African homes and businesses —
+                  fully integrated with our EV charging ecosystem.
                 </p>
+                <div className="flex flex-wrap gap-4 mt-5">
+                  {['Jinko Solar Panels', 'Deye Hybrid Inverters', 'Dyness Battery Storage'].map((item) => (
+                    <span key={item} className="flex items-center gap-1.5 text-xs text-[#8EB69B] font-semibold">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
             <a
               href="/energy"
-              className="shrink-0 inline-flex items-center gap-2 bg-[#235347] hover:bg-[#2d6b5c] text-white font-bold px-7 py-3.5 rounded-full text-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
+              className="shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-[#235347] to-[#052659] hover:opacity-90 text-white font-bold px-8 py-4 rounded-2xl text-sm transition-all hover:-translate-y-0.5 whitespace-nowrap shadow-xl"
             >
               <Sun className="h-4 w-4" />
               Explore Solar Solutions
+              <ArrowRight className="h-4 w-4" />
             </a>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#051F20] text-gray-400 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-[1600px] mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-white text-sm font-semibold uppercase mb-4">Platform</h3>
-              <ul className="space-y-2">
-                <li><button onClick={() => handleLearnMore('charging-network')} className="hover:text-white transition-colors text-sm">Charging Map</button></li>
-                <li><button onClick={() => handleLearnMore('battery-toolkit')} className="hover:text-white transition-colors text-sm">Battery Toolkit</button></li>
-                <li><button onClick={() => handleLearnMore('energy-intelligence')} className="hover:text-white transition-colors text-sm">Analytics</button></li>
-                <li><button onClick={() => handleLearnMore('sustainability')} className="hover:text-white transition-colors text-sm">Sustainability</button></li>
-                <li><a href="/energy" className="hover:text-white transition-colors text-sm flex items-center gap-1">☀️ Energy &amp; Solar</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white text-sm font-semibold uppercase mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors text-sm">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm">Press</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white text-sm font-semibold uppercase mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors text-sm">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm">Partner Program</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm">API Docs</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-white text-sm font-semibold uppercase mb-4">Contact</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span>📧</span> info@rauell.systems
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>📞</span> +254 700 000 000
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>📍</span> Nairobi, Kenya
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-6 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
+      {/* ── FINAL CTA ────────────────────────────────────────── */}
+      <section className="py-24 bg-gradient-to-br from-[#021024] via-[#052659] to-[#163832] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-15"
+          style={{ backgroundImage: 'radial-gradient(circle at 30% 50%,rgba(142,182,155,0.5) 0%,transparent 50%),radial-gradient(circle at 70% 50%,rgba(84,131,179,0.5) 0%,transparent 50%)' }}
+        />
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold uppercase tracking-[0.2em] text-[#8EB69B] mb-4">
+              Get Started Today
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl md:text-5xl font-black text-white mb-5">
+              Ready to Power Your Journey?
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-white/50 text-lg max-w-2xl mx-auto mb-10">
+              Join thousands of drivers, fleet managers, and businesses across East Africa already
+              using SafariCharge to power a cleaner future.
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-4 justify-center">
+              <Button
+                size="lg"
+                onClick={onGetStarted}
+                className="h-14 px-10 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold text-base shadow-2xl"
+              >
+                <Zap className="w-5 h-5 mr-2" />
+                Sign In to Dashboard
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-14 px-10 bg-transparent text-white border-2 border-white/25 hover:bg-white/10 font-semibold text-base"
+                asChild
+              >
+                <a href="mailto:info@rauell.systems">Contact Sales</a>
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────────── */}
+      <footer className="bg-[#040d1a] text-gray-500 py-16 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
+            {/* brand col */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
+                  <Zap className="w-4.5 h-4.5 text-white" />
+                </div>
+                <span className="text-white font-extrabold text-lg">SafariCharge</span>
               </div>
-              <span className="font-semibold text-white">SafariCharge</span>
+              <p className="text-sm leading-relaxed mb-5 max-w-xs">
+                Building the backbone for East Africa's clean-mobility transition — charging
+                networks, battery repurposing, and solar energy in one platform.
+              </p>
+              <div className="space-y-2 text-sm">
+                <a href="mailto:info@rauell.systems" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Mail className="w-4 h-4 text-[#235347]" />
+                  info@rauell.systems
+                </a>
+                <a href="tel:+254700000000" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Phone className="w-4 h-4 text-[#235347]" />
+                  +254 700 000 000
+                </a>
+              </div>
             </div>
-            <p className="text-sm text-gray-500">© 2025 SafariCharge. All rights reserved. Powering Africa's Electric Future.</p>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-white transition-colors text-sm">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors text-sm">Terms</a>
+
+            {/* link cols */}
+            {[
+              {
+                heading: 'Platform',
+                links: [
+                  { label: 'Charging Map', action: () => openModal('charging-network') },
+                  { label: 'Battery Toolkit', action: () => openModal('battery-toolkit') },
+                  { label: 'Analytics', action: () => openModal('energy-intelligence') },
+                  { label: 'Sustainability', action: () => openModal('sustainability') },
+                ],
+              },
+              {
+                heading: 'Energy',
+                links: [
+                  { label: 'Solar Panels', href: '/energy' },
+                  { label: 'Hybrid Inverters', href: '/energy' },
+                  { label: 'Battery Storage', href: '/energy' },
+                  { label: 'Solar Calculator', href: '/energy' },
+                ],
+              },
+              {
+                heading: 'Company',
+                links: [
+                  { label: 'About Us', href: '#about' },
+                  { label: 'Careers', href: '#' },
+                  { label: 'Press', href: '#' },
+                  { label: 'Contact', href: 'mailto:info@rauell.systems' },
+                ],
+              },
+            ].map((col) => (
+              <div key={col.heading}>
+                <h3 className="text-white text-xs font-bold uppercase tracking-widest mb-4">{col.heading}</h3>
+                <ul className="space-y-2.5">
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      {'action' in l ? (
+                        <button
+                          onClick={l.action}
+                          className="text-sm hover:text-white transition-colors"
+                        >
+                          {l.label}
+                        </button>
+                      ) : (
+                        <a href={l.href} className="text-sm hover:text-white transition-colors">
+                          {l.label}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-8 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-gray-600">© 2026 SafariCharge · Rauell Systems. All rights reserved.</p>
+            <div className="flex gap-6 text-xs">
+              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 md:hidden z-50">
-        <Button 
+      {/* ── MOBILE STICKY CTA ────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t border-gray-100 md:hidden z-50 shadow-lg">
+        <Button
           onClick={onGetStarted}
-          className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white h-12 shadow-lg"
+          className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white h-12 font-bold shadow-lg"
         >
           <Zap className="w-4 h-4 mr-2" />
-          Sign In
-          <ArrowRight className="ml-2 h-5 w-5" />
+          Get Started Free
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
 
-      {/* Learn More Dialog */}
+      {/* ── FEATURE MODAL ────────────────────────────────────── */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
           {featureDetail && (
             <>
               <DialogHeader>
                 <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-2xl bg-gradient-to-br ${featureDetail.gradient} shadow-lg`}>
-                    <featureDetail.icon className="w-8 h-8 text-white" />
+                  <div className={`p-3 rounded-2xl bg-gradient-to-br ${featureDetail.gradient} shadow-lg flex-shrink-0`}>
+                    <featureDetail.icon className="w-7 h-7 text-white" />
                   </div>
-                  <div className="flex-1">
-                    <DialogTitle className="text-2xl font-bold text-gray-900">{featureDetail.title}</DialogTitle>
-                    <DialogDescription className="text-gray-600 mt-2 text-base">
+                  <div>
+                    <DialogTitle className="text-xl font-black text-gray-900">{featureDetail.title}</DialogTitle>
+                    <DialogDescription className="text-gray-500 mt-1.5 text-sm leading-relaxed">
                       {featureDetail.description}
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
-              
-              <div className="space-y-6 mt-6">
-                {/* Stats */}
+
+              <div className="space-y-7 mt-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {featureDetail.stats.map((stat, idx) => (
-                    <div key={idx} className="text-center p-4 rounded-xl bg-[#f0f7f5]">
-                      <div className="text-2xl font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">{stat.value}</div>
-                      <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
+                  {featureDetail.stats.map((s) => (
+                    <div key={s.label} className="text-center p-4 rounded-xl bg-[#f8fafb] border border-gray-100">
+                      <p className="text-xl font-black bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">{s.value}</p>
+                      <p className="text-xs text-gray-500 mt-1">{s.label}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Features */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 text-lg">Key Features</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {featureDetail.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 hover:bg-[#f0f7f5] transition-colors">
-                        <div className={`p-2 rounded-lg bg-gradient-to-br ${featureDetail.gradient}`}>
-                          <feature.icon className="w-4 h-4 text-white" />
+                  <h4 className="font-bold text-gray-900 mb-3">Key Features</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {featureDetail.features.map((f) => (
+                      <div key={f.title} className="flex gap-3 p-4 rounded-xl bg-[#f8fafb] border border-gray-100 hover:border-[#235347]/20 transition-colors">
+                        <div className={`p-2 rounded-lg bg-gradient-to-br ${featureDetail.gradient} flex-shrink-0`}>
+                          <f.icon className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{feature.title}</p>
-                          <p className="text-sm text-gray-600 mt-1">{feature.description}</p>
+                          <p className="font-semibold text-gray-900 text-sm">{f.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{f.description}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Benefits */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-4 text-lg">Benefits</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {featureDetail.benefits.map((benefit, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-3 rounded-lg bg-[#f0f7f5]">
-                        <CheckCircle className="w-4 h-4 text-[#235347]" />
-                        <span className="text-sm text-gray-600">{benefit}</span>
+                  <h4 className="font-bold text-gray-900 mb-3">Benefits</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {featureDetail.benefits.map((b) => (
+                      <div key={b} className="flex items-center gap-2 p-3 rounded-lg bg-[#f0f7f5]">
+                        <CheckCircle className="w-3.5 h-3.5 text-[#235347] flex-shrink-0" />
+                        <span className="text-xs text-gray-600">{b}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Button 
-                  onClick={onGetStarted} 
-                  className="w-full bg-gradient-to-r from-[#235347] to-[#052659] hover:from-[#163832] hover:to-[#141E30] text-white"
+                <Button
+                  onClick={onGetStarted}
+                  className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90"
                 >
                   Get Started
                   <ArrowRight className="w-4 h-4 ml-2" />
