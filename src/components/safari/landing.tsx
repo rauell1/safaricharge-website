@@ -286,21 +286,22 @@ export function Landing({ onGetStarted }: LandingProps) {
       <PublicNav onSignIn={onGetStarted} />
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-gradient-to-br from-[#021024] via-[#052659] to-[#163832]">
-        {/* subtle grid */}
+      <section className="relative min-h-[100svh] flex items-center pt-16 overflow-hidden bg-gradient-to-br from-[#021024] via-[#052659] to-[#163832]">
+        {/* grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)',
-            backgroundSize: '64px 64px',
+              'linear-gradient(rgba(255,255,255,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.8) 1px,transparent 1px)',
+            backgroundSize: '80px 80px',
           }}
         />
-        {/* glow orbs */}
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-[#5483B3]/20 blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-[#235347]/25 blur-[140px] pointer-events-none" />
+        {/* glow orbs — bigger and brighter */}
+        <div className="absolute -top-40 -left-40 w-[700px] h-[700px] rounded-full bg-[#5483B3]/25 blur-[140px] pointer-events-none" />
+        <div className="absolute -bottom-40 -right-20 w-[700px] h-[700px] rounded-full bg-[#235347]/30 blur-[160px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-[#052659]/40 blur-[100px] pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-16 items-center">
 
           {/* LEFT: copy */}
           <motion.div
@@ -309,7 +310,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             variants={stagger}
           >
             <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/15 text-white/80 text-xs font-medium mb-7">
+              <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 text-white/90 text-xs font-semibold mb-8 tracking-wide">
                 <span className="w-2 h-2 rounded-full bg-[#8EB69B] animate-ping" />
                 254 live charging stations across Kenya
               </span>
@@ -317,63 +318,64 @@ export function Landing({ onGetStarted }: LandingProps) {
 
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black leading-[1.1] text-white mb-6"
+              className="text-5xl sm:text-6xl lg:text-[5.5rem] font-black leading-[0.95] tracking-tight text-white mb-7"
             >
-              Powering EV charging &amp; energy for{' '}
-              <span className="relative inline-block min-w-[200px] text-left">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={swapWords[wordIndex]}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' as const }}
-                    className="absolute left-0 right-0 bg-gradient-to-r from-[#8EB69B] to-[#C1E8FF] bg-clip-text text-transparent"
-                  >
-                    {swapWords[wordIndex]}
-                  </motion.span>
-                </AnimatePresence>
-                <span className="opacity-0">{swapWords[wordIndex]}</span>
+              <span className="block">Powering</span>
+              <span className="block bg-gradient-to-r from-[#8EB69B] via-[#C1E8FF] to-[#8EB69B] bg-clip-text text-transparent">
+                East Africa's
+              </span>
+              <span className="block">EV future for{' '}
+                <span className="relative inline-block">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={swapWords[wordIndex]}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' as const }}
+                      className="absolute left-0 whitespace-nowrap underline decoration-[#8EB69B] decoration-4 underline-offset-4"
+                    >
+                      {swapWords[wordIndex]}
+                    </motion.span>
+                  </AnimatePresence>
+                  <span className="opacity-0 whitespace-nowrap">{swapWords[wordIndex]}</span>
+                </span>
               </span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-lg text-white/60 leading-relaxed mb-9 max-w-xl"
+              className="text-base sm:text-lg text-white/70 leading-relaxed mb-10 max-w-lg"
             >
-              Find charging stations, manage fleet energy, repurpose EV batteries, and track your
-              carbon footprint, all in one intelligent platform powering East Africa's electric
-              mobility revolution.
+              One platform to find chargers, manage fleet energy, repurpose batteries, and track
+              your carbon footprint — built for Kenya's electric revolution.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-4 mb-10">
-              <Button
-                size="lg"
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-3 mb-10">
+              <button
                 onClick={onGetStarted}
-                className="h-13 px-8 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold shadow-xl text-base cursor-pointer"
+                className="inline-flex items-center gap-2 h-14 px-8 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold text-base rounded-2xl shadow-[0_0_40px_rgba(142,182,155,0.35)] hover:shadow-[0_0_50px_rgba(142,182,155,0.5)] transition-all cursor-pointer"
               >
                 Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
                 onClick={() => document.getElementById('network')?.scrollIntoView({ behavior: 'smooth' })}
-                className="h-13 px-8 bg-transparent text-white border-white/25 hover:bg-white/10 font-semibold text-base"
+                className="inline-flex items-center gap-2 h-14 px-8 bg-white/5 text-white border border-white/20 hover:bg-white/10 hover:border-white/40 font-semibold text-base rounded-2xl transition-all cursor-pointer backdrop-blur-sm"
               >
                 Explore Network
-              </Button>
+              </button>
             </motion.div>
 
             {/* trust row */}
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+            <motion.div variants={fadeUp} className="flex flex-wrap gap-5">
               {[
                 { icon: Shield, text: 'Enterprise-grade security' },
                 { icon: CheckCircle, text: '98.5% network uptime' },
                 { icon: Leaf, text: '12,800 t CO2 saved' },
               ].map(({ icon: Icon, text }) => (
-                <span key={text} className="inline-flex items-center gap-1.5 text-xs text-white/50 font-medium">
-                  <Icon className="w-3.5 h-3.5 text-[#8EB69B]" />
+                <span key={text} className="inline-flex items-center gap-2 text-xs text-white/60 font-medium">
+                  <Icon className="w-3.5 h-3.5 text-[#8EB69B] flex-shrink-0" />
                   {text}
                 </span>
               ))}
