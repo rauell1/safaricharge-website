@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { motion, useScroll, useInView, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useScroll } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,43 +18,23 @@ import {
   FileText, Truck, Wrench, Star, Phone, Mail,
   TrendingUp,
 } from 'lucide-react';
+import { AnimatedCounter } from '@/components/safari/animated-counter';
+import { KenyaMapSvg } from '@/components/safari/kenya-map-svg';
+import { PublicNav } from '@/components/safari/public-nav';
 
 interface LandingProps {
   onGetStarted: () => void;
   onNavigate?: (tab: string) => void;
 }
 
-/* ── animated counter ───────────────────────────────────────── */
-function AnimatedStat({ value }: { value: string }) {
-  const numStr = value.match(/[\d.]+/)?.[0] ?? '0';
-  const num = parseFloat(numStr);
-  const suffix = value.replace(/[\d.]+/, '');
-  const isDecimal = numStr.includes('.');
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  useEffect(() => {
-    if (!inView) return;
-    let start: number | null = null;
-    const tick = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / 2000, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setCount(isDecimal ? Math.round(eased * num * 10) / 10 : Math.round(eased * num));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [inView, num, isDecimal]);
-  return <span ref={ref}>{count}{suffix}</span>;
-}
-
 /* ── shared animation variants ─────────────────────────────── */
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' as const } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 };
 
 const stagger = {
+  hidden: {},
   show: { transition: { staggerChildren: 0.1 } },
 };
 
@@ -182,54 +162,73 @@ const featureDetails: Record<string, FeatureDetail> = {
 
 /* ════════════════════════════════════════════════════════════ */
 export function Landing({ onGetStarted }: LandingProps) {
-  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { scrollYProgress } = useScroll();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeFeatureKey, setActiveFeatureKey] = useState<string>('charging-network');
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  const openModal = (id: string) => { setSelectedFeature(id); setIsModalOpen(true); };
-  const featureDetail = selectedFeature ? featureDetails[selectedFeature] : null;
+  // Word swap array and state
+  const swapWords = ['drivers', 'fleets', 'businesses'];
+  const [wordIndex, setWordIndex] = useState(0);
 
-  /* ── data ── */
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % swapWords.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const openModal = (key: string) => {
+    setActiveFeatureKey(key);
+    setIsModalOpen(true);
+  };
+
+  const featureDetail = featureDetails[activeFeatureKey];
+
   const services = [
     {
       id: 'charging-network',
       num: '01',
       icon: MapPin,
-      title: 'Charging Network',
-      description: "Kenya's largest EV charging network with 254+ points across 11 counties with real-time availability included.",
+      title: 'EV Charging Network',
+      description:
+        "Access Kenya's largest network of high-speed chargers, with real-time status and smart routing.",
       color: 'from-[#235347] to-[#163832]',
     },
     {
       id: 'battery-toolkit',
       num: '02',
       icon: Recycle,
-      title: 'Battery Repurposing',
-      description: 'Full lifecycle management from EV to stationary storage with SoH assessment and second-life matching.',
+      title: 'Battery Lifecycle Management',
+      description:
+        'Repurpose EV batteries for stationary storage. Evaluate health, estimate value, and match applications.',
       color: 'from-[#052659] to-[#141E30]',
     },
     {
       id: 'energy-intelligence',
       num: '03',
       icon: BarChart3,
-      title: 'Energy Intelligence',
-      description: 'AI-powered analytics for grid optimisation, fleet routing, and predictive maintenance.',
+      title: 'AI Energy Intelligence',
+      description:
+        'Optimize energy usage, predict maintenance needs, and reduce costs with predictive ML models.',
       color: 'from-[#5483B3] to-[#7DA0CA]',
     },
     {
       id: 'sustainability',
       num: '04',
       icon: Leaf,
-      title: 'Carbon Tracking',
-      description: 'Monitor your environmental impact, earn green certificates, and meet ESG targets.',
+      title: 'Carbon & Sustainability',
+      description:
+        'Track avoided CO₂ emissions, download green certificates, and drive your ESG reporting forward.',
       color: 'from-[#8EB69B] to-[#235347]',
     },
   ];
 
   const stats = [
-    { value: '254+', label: 'Public Chargers', icon: Plug },
-    { value: '11', label: 'Counties Covered', icon: MapPin },
-    { value: '1.2 M+', label: 'kWh Delivered', icon: Zap },
-    { value: '98.5%', label: 'Network Uptime', icon: TrendingUp },
+    { numericValue: 254, suffix: '+', label: 'Public Chargers', icon: Plug },
+    { numericValue: 11, suffix: '', label: 'Counties Covered', icon: MapPin },
+    { numericValue: 1.2, decimals: 1, suffix: ' M+', label: 'kWh Delivered', icon: Zap },
+    { numericValue: 98.5, decimals: 1, suffix: '%', label: 'Network Uptime', icon: TrendingUp },
   ];
 
   const steps = [
@@ -243,102 +242,48 @@ export function Landing({ onGetStarted }: LandingProps) {
       num: '02',
       icon: MapPin,
       title: 'Find & charge',
-      description: 'Open the interactive map, locate the nearest station, navigate there, and start charging with one tap.',
+      description: 'Locate the nearest charging station on our map, check live availability, and navigate directly.',
     },
     {
       num: '03',
-      icon: BarChart3,
-      title: 'Track & optimise',
-      description: 'Review charging history, monitor energy costs, measure carbon savings, and optimise your fleet in real time.',
+      icon: Zap,
+      title: 'Track energy & savings',
+      description: 'Monitor charging costs, track battery health, and measure your carbon footprint reduction in real time.',
     },
   ];
 
   const testimonials = [
     {
-      quote: "SafariCharge cut our fleet's charging admin from hours to minutes. The real-time map and billing reports are invaluable for our operations team.",
-      name: 'Amina Waweru',
+      name: 'James Mwangi',
       role: 'Fleet Manager',
-      company: 'Nairobi Logistics Ltd',
+      company: 'Nairobi Green Logistics',
+      quote: "SafariCharge cut our fleet's charging admin from hours to minutes. The real-time map and billing reports are invaluable for our operations team.",
       rating: 5,
     },
     {
-      quote: "We deployed repurposed EV batteries for our lodge's solar storage. The SoH toolkit gave us confidence in every battery we selected.",
-      name: 'James Kamau',
-      role: 'Operations Director',
-      company: 'Rift Valley Eco Lodges',
+      name: 'Sarah Amondi',
+      role: 'EV Owner',
+      company: 'Tech Professional',
+      quote: 'The high-speed CCS2 chargers are incredibly reliable. I can top up my Nissan Leaf or Tesla in 25 minutes while catching a coffee.',
       rating: 5,
     },
     {
-      quote: "The carbon tracking certificates have been essential for our ESG reporting. Our investors love the detailed monthly impact summaries.",
-      name: 'Grace Odhiambo',
+      name: 'David Ochieng',
       role: 'Sustainability Lead',
-      company: 'East Africa Holdings',
+      company: 'East Africa Retail Group',
+      quote: 'We repurposed 120 retired EV batteries into solar-coupled stationary backup for our retail branches. The battery toolkit saved us thousands.',
       rating: 5,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Scroll progress bar */}
+    <div className="min-h-screen bg-white relative">
       <motion.div
         className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#235347] via-[#8EB69B] to-[#052659] z-[60]"
         style={{ scaleX: scrollYProgress, transformOrigin: '0%' }}
       />
-
-      {/* ── NAV ─────────────────────────────────────────────── */}
-      <motion.nav
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100"
-      >
-        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center shadow-md">
-              <Zap className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div className="leading-none">
-              <span className="text-lg font-extrabold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
-                SafariCharge
-              </span>
-              <p className="text-[9px] font-semibold tracking-widest text-[#8EB69B] uppercase">Powering Africa</p>
-            </div>
-          </div>
-
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-7">
-            {['Network', 'Services', 'How It Works', 'About'].map((label, i) => (
-              <a
-                key={label}
-                href={`#${['network', 'services', 'how-it-works', 'about'][i]}`}
-                className="text-sm font-medium text-gray-500 hover:text-[#235347] transition-colors"
-              >
-                {label}
-              </a>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onGetStarted}
-              className="hidden md:inline-flex text-[#235347] font-semibold hover:bg-[#f0f7f5]"
-            >
-              Sign In
-            </Button>
-            <Button
-              onClick={onGetStarted}
-              size="sm"
-              className="bg-gradient-to-r from-[#235347] to-[#052659] text-white hover:opacity-90 shadow-md font-semibold"
-            >
-              Get Started
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-      </motion.nav>
+      {/* ── HEADER NAVIGATION ─────────────────────────────────── */}
+      <PublicNav onSignIn={onGetStarted} />
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden bg-gradient-to-br from-[#021024] via-[#052659] to-[#163832]">
@@ -365,7 +310,7 @@ export function Landing({ onGetStarted }: LandingProps) {
           >
             <motion.div variants={fadeUp}>
               <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/15 text-white/80 text-xs font-medium mb-7">
-                <span className="w-2 h-2 rounded-full bg-[#8EB69B] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#8EB69B] animate-ping" />
                 254 live charging stations across Kenya
               </span>
             </motion.div>
@@ -374,13 +319,21 @@ export function Landing({ onGetStarted }: LandingProps) {
               variants={fadeUp}
               className="text-4xl sm:text-5xl lg:text-[3.6rem] font-black leading-[1.1] text-white mb-6"
             >
-              Africa's Premier{' '}
-              <span className="bg-gradient-to-r from-[#8EB69B] to-[#C1E8FF] bg-clip-text text-transparent">
-                EV Charging
-              </span>
-              {' '}&amp;{' '}
-              <span className="bg-gradient-to-r from-[#C1E8FF] to-[#8EB69B] bg-clip-text text-transparent">
-                Energy Platform
+              Powering EV charging &amp; energy for{' '}
+              <span className="relative inline-block min-w-[200px] text-left">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={swapWords[wordIndex]}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' as const }}
+                    className="absolute left-0 right-0 bg-gradient-to-r from-[#8EB69B] to-[#C1E8FF] bg-clip-text text-transparent"
+                  >
+                    {swapWords[wordIndex]}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="opacity-0">{swapWords[wordIndex]}</span>
               </span>
             </motion.h1>
 
@@ -397,7 +350,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               <Button
                 size="lg"
                 onClick={onGetStarted}
-                className="h-13 px-8 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold shadow-xl text-base"
+                className="h-13 px-8 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold shadow-xl text-base cursor-pointer"
               >
                 Get Started Free
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -417,7 +370,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               {[
                 { icon: Shield, text: 'Enterprise-grade security' },
                 { icon: CheckCircle, text: '98.5% network uptime' },
-                { icon: Leaf, text: '12,800 t CO₂ saved' },
+                { icon: Leaf, text: '12,800 t CO2 saved' },
               ].map(({ icon: Icon, text }) => (
                 <span key={text} className="inline-flex items-center gap-1.5 text-xs text-white/50 font-medium">
                   <Icon className="w-3.5 h-3.5 text-[#8EB69B]" />
@@ -427,81 +380,42 @@ export function Landing({ onGetStarted }: LandingProps) {
             </motion.div>
           </motion.div>
 
-          {/* RIGHT: live status panel */}
+          {/* RIGHT: SVG Kenya Map panel */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
             className="hidden lg:block"
           >
-            <div className="relative bg-white/8 backdrop-blur-xl rounded-3xl border border-white/12 p-7 shadow-2xl">
-              {/* header row */}
+            <div className="relative bg-white/10 backdrop-blur border border-white/15 rounded-3xl p-7 shadow-2xl">
+              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">Network Status</p>
-                  <p className="text-white font-bold text-lg mt-0.5">Live Dashboard</p>
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">Network Live Status</p>
+                  <p className="text-white font-bold text-lg mt-0.5">Station Coverage</p>
                 </div>
                 <span className="flex items-center gap-1.5 bg-[#235347]/40 text-[#8EB69B] text-xs font-semibold px-3 py-1 rounded-full border border-[#8EB69B]/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8EB69B] animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8EB69B] animate-ping" />
                   LIVE
                 </span>
               </div>
 
-              {/* station rows */}
-              {[
-                { name: 'Westlands Hub', city: 'Nairobi', status: 'Available', connectors: 8 },
-                { name: 'Garden City Mall', city: 'Nairobi', status: 'In Use', connectors: 6 },
-                { name: 'Nakumatt Mega', city: 'Mombasa', status: 'Available', connectors: 4 },
-                { name: 'Milimani Station', city: 'Kisumu', status: 'Available', connectors: 3 },
-              ].map((s, i) => (
-                <motion.div
-                  key={s.name}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="flex items-center justify-between py-3 border-b border-white/8 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-[#8EB69B]" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold leading-none">{s.name}</p>
-                      <p className="text-white/40 text-xs mt-0.5">{s.city}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-white/40 text-xs">{s.connectors} pts</span>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      s.status === 'Available'
-                        ? 'bg-[#235347]/40 text-[#8EB69B]'
-                        : 'bg-[#5483B3]/30 text-[#C1E8FF]'
-                    }`}>
-                      {s.status}
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
+              {/* Map Canvas */}
+              <KenyaMapSvg interactive={false} />
 
-              {/* mini stats */}
-              <div className="grid grid-cols-3 gap-3 mt-6">
-                {[
-                  { value: '247', label: 'Online', color: 'text-[#8EB69B]' },
-                  { value: '4', label: 'Charging', color: 'text-[#C1E8FF]' },
-                  { value: '3', label: 'Maintenance', color: 'text-white/40' },
-                ].map((m) => (
-                  <div key={m.label} className="bg-white/6 rounded-xl p-3 text-center">
-                    <p className={`text-xl font-black ${m.color}`}>{m.value}</p>
-                    <p className="text-white/35 text-xs mt-0.5">{m.label}</p>
-                  </div>
-                ))}
+              <div className="mt-6 flex items-center justify-between text-xs text-white/50 bg-black/20 rounded-xl p-3 border border-white/5">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#8EB69B] animate-ping" />
+                  254 Chargers Online
+                </span>
+                <span>98.5% Uptime</span>
               </div>
 
               <Button
                 onClick={onGetStarted}
-                className="w-full mt-5 bg-gradient-to-r from-[#235347] to-[#052659] text-white font-semibold hover:opacity-90"
+                className="w-full mt-5 bg-gradient-to-r from-[#235347] to-[#052659] text-white font-semibold hover:opacity-90 cursor-pointer"
               >
-                View Full Map
+                View Live Station Map
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -535,7 +449,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               >
                 <s.icon className="w-5 h-5 text-[#235347] mb-2 opacity-60" />
                 <p className="text-3xl font-black bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
-                  <AnimatedStat value={s.value} />
+                  <AnimatedCounter value={s.numericValue} decimals={s.decimals} suffix={s.suffix} />
                 </p>
                 <p className="text-sm text-gray-500 mt-1 font-medium">{s.label}</p>
               </motion.div>
@@ -566,14 +480,17 @@ export function Landing({ onGetStarted }: LandingProps) {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((svc, i) => (
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
+            {services.map((svc) => (
               <motion.div
                 key={svc.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                variants={fadeUp}
                 whileHover={{ y: -6 }}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col"
               >
@@ -589,7 +506,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                   <p className="text-gray-500 text-sm leading-relaxed flex-1">{svc.description}</p>
                   <button
                     onClick={() => openModal(svc.id)}
-                    className="mt-5 flex items-center gap-1 text-sm font-semibold text-[#235347] hover:gap-2 transition-all"
+                    className="mt-5 flex items-center gap-1 text-sm font-semibold text-[#235347] hover:gap-2.5 transition-all cursor-pointer"
                   >
                     Learn more
                     <ChevronRight className="w-4 h-4" />
@@ -597,7 +514,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -636,7 +553,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               <Button
                 onClick={onGetStarted}
                 size="lg"
-                className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-lg"
+                className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-lg cursor-pointer"
               >
                 <MapPin className="mr-2 h-4 w-4" />
                 View Interactive Map
@@ -660,7 +577,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 { name: 'Kisumu', stations: 6, color: 'from-[#052659] to-[#5483B3]' },
                 { name: 'Eldoret', stations: 5, color: 'from-[#163832] to-[#235347]' },
                 { name: 'Laikipia', stations: 4, color: 'from-[#141E30] to-[#052659]' },
-                { name: '+3 more', stations: 166, color: 'from-[#235347] to-[#052659]' },
+                { name: '+3 counties', stations: 166, color: 'from-[#235347] to-[#052659]' },
               ].map((c, i) => (
                 <motion.div
                   key={c.name}
@@ -691,10 +608,10 @@ export function Landing({ onGetStarted }: LandingProps) {
         <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '12,800 t', label: 'CO₂ Saved', sub: 'Total fleet emissions offset' },
-              { value: '2,450+', label: 'Batteries Repurposed', sub: 'Extended to second-life use' },
-              { value: '185 MWh', label: 'Energy Repurposed', sub: 'Battery storage deployed' },
-              { value: '580 K', label: 'Trees Equivalent', sub: 'Annual carbon absorption' },
+              { numericValue: 12800, suffix: ' t', label: 'CO₂ Saved', sub: 'Total fleet emissions offset' },
+              { numericValue: 2450, suffix: '+', label: 'Batteries Repurposed', sub: 'Extended to second-life use' },
+              { numericValue: 185, suffix: ' MWh', label: 'Energy Repurposed', sub: 'Battery storage deployed' },
+              { numericValue: 580, suffix: ' K', label: 'Trees Equivalent', sub: 'Annual carbon absorption' },
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -703,7 +620,9 @@ export function Landing({ onGetStarted }: LandingProps) {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <p className="text-4xl md:text-5xl font-black text-white mb-1">{item.value}</p>
+                <p className="text-4xl md:text-5xl font-black text-white mb-1">
+                  <AnimatedCounter value={item.numericValue} suffix={item.suffix} />
+                </p>
                 <p className="text-[#8EB69B] font-bold text-sm mb-1">{item.label}</p>
                 <p className="text-white/35 text-xs">{item.sub}</p>
               </motion.div>
@@ -768,7 +687,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             <Button
               size="lg"
               onClick={onGetStarted}
-              className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-xl px-10 h-12"
+              className="bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 shadow-xl px-10 h-12 cursor-pointer"
             >
               Start for Free
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -795,7 +714,8 @@ export function Landing({ onGetStarted }: LandingProps) {
             </motion.h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-7">
+          {/* Desktop Layout */}
+          <div className="hidden md:grid md:grid-cols-3 gap-7">
             {testimonials.map((t, i) => (
               <motion.div
                 key={t.name}
@@ -824,6 +744,54 @@ export function Landing({ onGetStarted }: LandingProps) {
                 </div>
               </motion.div>
             ))}
+          </div>
+
+          {/* Mobile Carousel Layout */}
+          <div className="md:hidden relative flex flex-col items-center">
+            <div className="w-full overflow-hidden min-h-[280px] flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTestimonial}
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' as const }}
+                  className="bg-[#f8fafb] rounded-2xl border border-gray-100 p-8 flex flex-col shadow-md w-full"
+                >
+                  <div className="flex gap-0.5 mb-5">
+                    {Array.from({ length: testimonials[activeTestimonial].rating }).map((_, j) => (
+                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <blockquote className="text-gray-600 leading-relaxed flex-1 text-[0.95rem] italic mb-6">
+                    &ldquo;{testimonials[activeTestimonial].quote}&rdquo;
+                  </blockquote>
+                  <div className="flex items-center gap-3 border-t border-gray-100 pt-5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {testimonials[activeTestimonial].name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm">{testimonials[activeTestimonial].name}</p>
+                      <p className="text-gray-400 text-xs">{testimonials[activeTestimonial].role} · {testimonials[activeTestimonial].company}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Dot Pagination */}
+            <div className="flex gap-2 mt-6">
+              {testimonials.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveTestimonial(idx)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    activeTestimonial === idx ? 'bg-[#235347] w-6' : 'bg-gray-300'
+                  }`}
+                  aria-label={`Go to testimonial ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -879,7 +847,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                 { title: 'Founded in Nairobi', desc: 'Built for African roads, climate, and business realities, built by a team that understands the continent.', icon: MapPin },
                 { title: 'Pan-African Vision', desc: 'Starting with Kenya, expanding to East Africa with a roadmap into West and Southern Africa.', icon: Zap },
                 { title: 'Backed by Clean Energy', desc: 'Our charging network is progressively integrated with solar and second-life battery storage.', icon: Sun },
-              ].map((item, i) => (
+              ].map((item) => (
                 <div key={item.title} className="flex gap-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center flex-shrink-0 shadow-md">
                     <item.icon className="w-5 h-5 text-white" />
@@ -960,7 +928,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               <Button
                 size="lg"
                 onClick={onGetStarted}
-                className="h-14 px-10 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold text-base shadow-2xl"
+                className="h-14 px-10 bg-white text-[#051F20] hover:bg-[#DAF1DE] font-bold text-base shadow-2xl cursor-pointer"
               >
                 <Zap className="w-5 h-5 mr-2" />
                 Sign In to Dashboard
@@ -1029,7 +997,7 @@ export function Landing({ onGetStarted }: LandingProps) {
               {
                 heading: 'Company',
                 links: [
-                  { label: 'About Us', href: '#about' },
+                  { label: 'About Us', href: '/about' },
                   { label: 'Careers', href: '#' },
                   { label: 'Press', href: '#' },
                   { label: 'Contact', href: 'mailto:info@rauell.systems' },
@@ -1044,7 +1012,7 @@ export function Landing({ onGetStarted }: LandingProps) {
                       {'action' in l ? (
                         <button
                           onClick={l.action}
-                          className="text-sm hover:text-white transition-colors"
+                          className="text-sm hover:text-white transition-colors cursor-pointer"
                         >
                           {l.label}
                         </button>
@@ -1075,7 +1043,7 @@ export function Landing({ onGetStarted }: LandingProps) {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t border-gray-100 md:hidden z-50 shadow-lg">
         <Button
           onClick={onGetStarted}
-          className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white h-12 font-bold shadow-lg"
+          className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white h-12 font-bold shadow-lg cursor-pointer"
         >
           <Zap className="w-4 h-4 mr-2" />
           Get Started Free
@@ -1142,8 +1110,11 @@ export function Landing({ onGetStarted }: LandingProps) {
                 </div>
 
                 <Button
-                  onClick={onGetStarted}
-                  className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    onGetStarted();
+                  }}
+                  className="w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold hover:opacity-90 cursor-pointer"
                 >
                   Get Started
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1156,4 +1127,3 @@ export function Landing({ onGetStarted }: LandingProps) {
     </div>
   );
 }
-

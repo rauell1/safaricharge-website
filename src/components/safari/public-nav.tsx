@@ -14,7 +14,11 @@ const links = [
   { href: '/energy', label: 'Energy' },
 ];
 
-export function PublicNav() {
+interface PublicNavProps {
+  onSignIn?: () => void;
+}
+
+export function PublicNav({ onSignIn }: PublicNavProps = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -89,13 +93,23 @@ export function PublicNav() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="hidden md:inline-flex items-center gap-1.5 bg-gradient-to-r from-[#235347] to-[#052659] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-md"
-            >
-              Sign In
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {onSignIn ? (
+              <button
+                onClick={onSignIn}
+                className="hidden md:inline-flex items-center gap-1.5 bg-gradient-to-r from-[#235347] to-[#052659] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-md"
+              >
+                Sign In
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <Link
+                href="/"
+                className="hidden md:inline-flex items-center gap-1.5 bg-gradient-to-r from-[#235347] to-[#052659] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity shadow-md"
+              >
+                Sign In
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className={`md:hidden p-2 rounded-lg transition-colors ${scrolled ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}
@@ -164,14 +178,24 @@ export function PublicNav() {
               </nav>
 
               <div className="p-4 border-t border-gray-100">
-                <Link
-                  href="/"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
-                >
-                  <Zap className="w-4 h-4" />
-                  Sign In to Dashboard
-                </Link>
+                {onSignIn ? (
+                  <button
+                    onClick={() => { setMobileOpen(false); onSignIn(); }}
+                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Sign In to Dashboard
+                  </button>
+                ) : (
+                  <Link
+                    href="/"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Sign In to Dashboard
+                  </Link>
+                )}
               </div>
             </motion.div>
           </>
