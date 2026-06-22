@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, ArrowRight, Menu, X } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 const links = [
   { href: '/#network', label: 'Network' },
@@ -59,7 +60,7 @@ export function PublicNav({ onSignIn }: PublicNavProps = {}) {
               transition={{ type: 'spring', stiffness: 400 }}
               className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center shadow-md"
             >
-              <Zap className="w-4 h-4 text-white" />
+              <Logo className="w-5 h-5 text-white" />
             </motion.div>
             <div className="leading-none">
               <span className="text-lg font-extrabold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
@@ -142,7 +143,7 @@ export function PublicNav({ onSignIn }: PublicNavProps = {}) {
               <div className="flex items-center justify-between p-5 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-white" />
+                    <Logo className="w-5 h-5 text-white" />
                   </div>
                   <span className="font-extrabold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">
                     SafariCharge

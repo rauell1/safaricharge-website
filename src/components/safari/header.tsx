@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { useAuthStore, useUser, useIsAdmin, useCanAccessBattery, useCanAccessFleet, useCanAccessAnalytics } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/ui/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -138,7 +139,7 @@ export function Header({ activeTab, onTabChange, onHome }: HeaderProps) {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] shadow-lg">
-              <Zap className="h-5 w-5 text-white" />
+              <Logo className="h-6 w-6 text-white" />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">

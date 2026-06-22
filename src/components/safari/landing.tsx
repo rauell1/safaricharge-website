@@ -21,6 +21,7 @@ import {
 import { AnimatedCounter } from '@/components/safari/animated-counter';
 import { KenyaMapSvg } from '@/components/safari/kenya-map-svg';
 import { PublicNav } from '@/components/safari/public-nav';
+import { Logo } from '@/components/ui/logo';
 
 interface LandingProps {
   onGetStarted: () => void;
@@ -956,7 +957,7 @@ export function Landing({ onGetStarted }: LandingProps) {
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
-                  <Zap className="w-4.5 h-4.5 text-white" />
+                  <Logo className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-white font-extrabold text-lg">SafariCharge</span>
               </div>

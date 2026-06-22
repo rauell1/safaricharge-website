@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PublicNav } from '@/components/safari/public-nav';
 import { Zap, ArrowRight, Calendar, Clock, Mail } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -203,7 +204,7 @@ export function BlogClient() {
       <footer className="bg-[#040d1a] text-gray-500 py-10 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center"><Zap className="w-4 h-4 text-white" /></div>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center"><Logo className="w-5 h-5 text-white" /></div>
             <span className="text-white font-bold">SafariCharge</span>
           </div>
           <p className="text-xs text-gray-600">2026 SafariCharge, Rauell Systems. All rights reserved.</p>

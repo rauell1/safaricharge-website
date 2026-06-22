@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, User } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/ui/logo';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -389,7 +390,7 @@ export function Login({ onBack }: LoginProps) {
         >
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8EB69B] to-[#235347] shadow-xl">
-              <Zap className="h-8 w-8 text-white" />
+              <Logo className="h-9 w-9 text-white" />
             </div>
             <div>
               <span className="text-2xl font-bold text-white">SafariCharge</span>
@@ -461,7 +462,7 @@ export function Login({ onBack }: LoginProps) {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#8EB69B] to-[#235347] shadow-lg">
-              <Zap className="h-6 w-6 text-white" />
+              <Logo className="h-7 w-7 text-white" />
             </div>
             <div>
               <span className="text-xl font-bold text-[#051F20]">SafariCharge</span>

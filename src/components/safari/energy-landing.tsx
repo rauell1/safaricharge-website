@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/ui/logo';
 import { Badge } from '@/components/ui/badge';
 import {
   Sun,
@@ -212,7 +213,7 @@ export function EnergyLanding() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] shadow-md">
-              <Zap className="h-5 w-5 text-white" />
+              <Logo className="h-6 w-6 text-white" />
             </div>
             <div className="flex flex-col leading-none">
               <span className="text-base font-bold bg-gradient-to-r from-[#235347] to-[#052659] bg-clip-text text-transparent">

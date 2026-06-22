@@ -8,6 +8,7 @@ import {
   Zap, MapPin, Leaf, Shield, TrendingUp, Building2, Sun,
   CheckCircle, ArrowRight, Users, Globe, Recycle, Mail,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -282,7 +283,7 @@ export function AboutClient() {
         <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
+              <Logo className="w-5 h-5 text-white" />
             </div>
             <span className="text-white font-bold">SafariCharge</span>
           </div>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * AuthGate: client component
@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 import Link from 'next/link';
 import { CurrencyProvider } from '@/contexts/currency-context';
 import { Header } from '@/components/safari/header';
@@ -54,7 +55,7 @@ function LoadingScreen() {
         <div className="relative">
           <div className="h-16 w-16 rounded-full border-4 border-[var(--chart-4)] border-t-[var(--primary)] animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Zap className="h-8 w-8 text-[var(--primary)]" />
+            <Logo className="h-9 w-9 text-[var(--primary)] animate-pulse" />
           </div>
         </div>
         <p className="font-medium text-[var(--primary)]">Loading SafariCharge...</p>
