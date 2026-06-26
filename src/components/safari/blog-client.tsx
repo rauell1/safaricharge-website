@@ -172,7 +172,7 @@ export function BlogClient() {
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#235347] mb-4">Also Explore</p>
                 <Link href="/energy" className="flex items-center gap-4 p-4 rounded-xl bg-[#f8fafb] hover:bg-[#f0f7f5] transition-colors group">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center flex-shrink-0">
-                    <Zap className="w-5 h-5 text-white" />
+                    <Logo className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-sm">SafariCharge Energy</p>
@@ -194,7 +194,7 @@ export function BlogClient() {
             <motion.p variants={fadeUp} className="text-gray-500 max-w-xl mx-auto mb-8">Join thousands of drivers and fleet operators across Kenya already using SafariCharge.</motion.p>
             <motion.div variants={fadeUp}>
               <Link href="/" className="inline-flex items-center gap-2 h-12 px-8 bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg">
-                <Zap className="w-4 h-4" />Get Started Free<ArrowRight className="w-4 h-4" />
+                <Logo className="w-4 h-4" />Get Started Free<ArrowRight className="w-4 h-4" />
               </Link>
             </motion.div>
           </motion.div>

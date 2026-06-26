@@ -184,7 +184,7 @@ export function PublicNav({ onSignIn }: PublicNavProps = {}) {
                     onClick={() => { setMobileOpen(false); onSignIn(); }}
                     className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
                   >
-                    <Zap className="w-4 h-4" />
+                    <Logo className="w-4 h-4" />
                     Sign In to Dashboard
                   </button>
                 ) : (
@@ -193,7 +193,7 @@ export function PublicNav({ onSignIn }: PublicNavProps = {}) {
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#235347] to-[#052659] text-white font-bold py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg"
                   >
-                    <Zap className="w-4 h-4" />
+                    <Logo className="w-4 h-4" />
                     Sign In to Dashboard
                   </Link>
                 )}

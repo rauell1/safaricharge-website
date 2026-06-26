@@ -209,7 +209,7 @@ export function FeaturesClient() {
           <motion.p variants={fadeUp} className="text-white/50 text-lg max-w-2xl mx-auto mb-10">No credit card required. Access the charging map, session history, and carbon tracking immediately.</motion.p>
           <motion.div variants={fadeUp} className="flex flex-wrap gap-4 justify-center">
             <Link href="/" className="inline-flex items-center gap-2 h-14 px-10 bg-white text-[#051F20] font-bold text-base rounded-xl hover:bg-[#DAF1DE] transition-colors shadow-2xl">
-              <Zap className="w-5 h-5" />Get Started Free
+              <Logo className="w-5 h-5" />Get Started Free
             </Link>
             <Link href="mailto:info@rauell.systems" className="inline-flex items-center gap-2 h-14 px-10 bg-transparent text-white font-semibold text-base rounded-xl border-2 border-white/25 hover:bg-white/10 transition-colors">
               Contact Sales

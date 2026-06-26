@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { PublicNav } from '@/components/safari/public-nav';
 import { AnimatedCounter } from '@/components/safari/animated-counter';
+import { Logo } from '@/components/ui/logo';
 
 // shared animation variants
 const fadeUp = {
@@ -323,7 +324,7 @@ export function AboutClient() {
               href="/"
               className="inline-flex items-center gap-2 h-14 px-10 bg-white text-[#051F20] font-bold text-base rounded-xl hover:bg-[#DAF1DE] transition-colors shadow-2xl"
             >
-              <Zap className="w-5 h-5" />
+              <Logo className="w-5 h-5" />
               Sign In to Dashboard
             </Link>
             <Link
@@ -341,7 +342,7 @@ export function AboutClient() {
         <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#235347] to-[#052659] flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
+              <Logo className="w-4 h-4 text-white" />
             </div>
             <span className="text-white font-bold">SafariCharge</span>
           </div>
